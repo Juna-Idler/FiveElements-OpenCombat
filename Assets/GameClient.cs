@@ -273,17 +273,31 @@ public class GameClient : MonoBehaviour
                     SetSortingGroupOrder(Rival.Used[Rival.Used.Count - 2], 0);
                 moves.Add(new MoveObject() { Object = Myself.Battle, Delta = (Myself.UsedPosition - Myself.Battle.transform.position) / 30 });
                 moves.Add(new MoveObject() { Object = Rival.Battle, Delta = (Rival.UsedPosition - Rival.Battle.transform.position) / 30 });
-
                 break;
+
             case ClientData.Phases.DamagePhase:
                 Myself.Used.Add(Myself.Battle);
                 Rival.Used.Add(Rival.Battle);
                 break;
+
             case ClientData.Phases.GameEndWin:
+                Message.text = "Win";
+                FrontCanvas.SetActive(true);
+                InEffect = false;
+                yield break;
             case ClientData.Phases.GameEndLose:
+                Message.text = "Lose";
+                FrontCanvas.SetActive(true);
+                InEffect = false;
+                yield break;
             case ClientData.Phases.GameEndDraw:
-                break;
+                Message.text = "Draw";
+                FrontCanvas.SetActive(true);
+                InEffect = false;
+                yield break;
         }
+
+
 
         for (int i = data.myself.hand.Length - data.mydraw; i < data.myself.hand.Length; i++)
         {
@@ -344,24 +358,6 @@ public class GameClient : MonoBehaviour
             {
                 Rival.Used[Rival.Used.Count - 2].SetActive(false);
             }
-
-        }
-        if (Phase == ClientData.Phases.GameEndWin || Phase == ClientData.Phases.GameEndLose || Phase == ClientData.Phases.GameEndDraw)
-        {
-            switch (Phase)
-            {
-                case ClientData.Phases.GameEndWin:
-                    Message.text = "Win";
-                    break;
-                case ClientData.Phases.GameEndLose:
-                    Message.text = "Lose";
-                    break;
-                case ClientData.Phases.GameEndDraw:
-                    Message.text = "Draw";
-                    break;
-            }
-
-            FrontCanvas.SetActive(true);
 
         }
         InEffect = false;
