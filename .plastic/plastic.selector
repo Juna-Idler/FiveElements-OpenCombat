@@ -1,0 +1,4 @@
+repository "OpenCombat@Juna@cloud"
+  path "/"
+    br "/main"
+    co "/main"
