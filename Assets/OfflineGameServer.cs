@@ -1,4 +1,4 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -54,7 +54,7 @@ public class OfflineGameServer : IGameServer
         }
     }
     private ClientData.Phases Phase;
-    private int BattleDamage; //BattlePhase‚Åƒ_ƒ[ƒW‚ª”­¶‚µ‚½i+:Player1‚Éƒ_ƒ[ƒW -:Player2‚Éƒ_ƒ[ƒWj
+    private int BattleDamage; //BattlePhaseã§ãƒ€ãƒ¡ãƒ¼ã‚¸ãŒç™ºç”Ÿã—ãŸï¼ˆ+:Player1ã«ãƒ€ãƒ¡ãƒ¼ã‚¸ -:Player2ã«ãƒ€ãƒ¡ãƒ¼ã‚¸ï¼‰
     private PlayerData Player1;
     private PlayerData Player2;
 
@@ -94,9 +94,7 @@ public class OfflineGameServer : IGameServer
             case ClientData.Phases.DamagePhase:
                 Damage(index);
                 break;
-            case ClientData.Phases.GameEndWin:
-            case ClientData.Phases.GameEndLose:
-            case ClientData.Phases.GameEndDraw:
+            case ClientData.Phases.GameEnd:
                 break;
         }
 
@@ -121,15 +119,9 @@ public class OfflineGameServer : IGameServer
 
         int life1 = Player1.hand.Count + Player1.deck.Count - System.Convert.ToInt32(battleresult < 0);
         int life2 = Player2.hand.Count + Player2.deck.Count - System.Convert.ToInt32(battleresult > 0);
-        if (life1 <= 0 || life2 <= 0)   //Œˆ’…‚ª‚Â‚­ê‡
+        if (life1 <= 0 || life2 <= 0)   //æ±ºç€ãŒã¤ãå ´åˆ
         {
-            int gameresult = life1 - life2;
-            if (gameresult > 0)
-                Phase = ClientData.Phases.GameEndWin;
-            else if (gameresult < 0)
-                Phase = ClientData.Phases.GameEndLose;
-            else
-                Phase = ClientData.Phases.GameEndDraw;
+            Phase = ClientData.Phases.GameEnd;
 
             Data.phase = Phase;
             Data.damage = System.Convert.ToInt32(battleresult < 0) - System.Convert.ToInt32(battleresult > 0);

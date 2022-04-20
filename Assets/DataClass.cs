@@ -1,32 +1,32 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 
 
 
 public class ClientData
 {
-    public enum Phases { BattlePhase, DamagePhase, GameEndWin, GameEndLose, GameEndDraw }
+    public enum Phases { BattlePhase, DamagePhase, GameEnd }
     public class PlayerData
     {
-        public CardData[] hand; //èD
-        public int decknum;     //ƒfƒbƒL‚Ìc‚è–‡”
-        public CardData[] used; //í“¬‚Åg—p‚µ‚½ƒJ[ƒh
-        public CardData[] damage;  //ƒ_ƒ[ƒW‚Æ‚µ‚ÄÌ‚Ä‚½ƒJ[ƒh
+        public CardData[] hand; //æ‰‹æœ­
+        public int decknum;     //ãƒ‡ãƒƒã‚­ã®æ®‹ã‚Šæšæ•°
+        public CardData[] used; //æˆ¦é—˜ã§ä½¿ç”¨ã—ãŸã‚«ãƒ¼ãƒ‰
+        public CardData[] damage;  //ãƒ€ãƒ¡ãƒ¼ã‚¸ã¨ã—ã¦æ¨ã¦ãŸã‚«ãƒ¼ãƒ‰
     }
 
     public Phases phase;
-//    public Phases lastphase;  //’¼‘O‚ÌƒtƒFƒCƒY
+//    public Phases lastphase;  //ç›´å‰ã®ãƒ•ã‚§ã‚¤ã‚º
 
-    public PlayerData myself;   //©•ª
-    public PlayerData rival; //‘Šè
+    public PlayerData myself;   //è‡ªåˆ†
+    public PlayerData rival; //ç›¸æ‰‹
 
-    public int myselect;       //©•ª‚Ì‘I‚ñ‚¾èD‚ÌˆÊ’u
-    public int rivalselect; //‘Šè‚Ì‘I‚ñ‚¾èD‚ÌˆÊ’u
+    public int myselect;       //è‡ªåˆ†ã®é¸ã‚“ã æ‰‹æœ­ã®ä½ç½®
+    public int rivalselect; //ç›¸æ‰‹ã®é¸ã‚“ã æ‰‹æœ­ã®ä½ç½®
 
-    public int mydraw;    //ˆø‚¢‚½ƒJ[ƒh‚Ì–‡”iHand‚ÌŒã‚ë‚ÌƒJ[ƒhj
+    public int mydraw;    //å¼•ã„ãŸã‚«ãƒ¼ãƒ‰ã®æšæ•°ï¼ˆHandã®å¾Œã‚ã®ã‚«ãƒ¼ãƒ‰ï¼‰
     public int rivaldraw;
 
-    public int damage;  //í“¬‚Ìƒ_ƒ[ƒW’l
+    public int damage;  //æˆ¦é—˜æ™‚ã®ãƒ€ãƒ¡ãƒ¼ã‚¸å€¤
 }
 
 
@@ -34,11 +34,11 @@ public class CardData
 {
     public enum FiveElements
     {
-        –Ø,
-        ‰Î,
-        “y,
-        ‹à,
-        …
+        æœ¨,
+        ç«,
+        åœŸ,
+        é‡‘,
+        æ°´
     }
 
     public FiveElements Element;

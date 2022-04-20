@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -33,14 +33,20 @@ public class GameClient : MonoBehaviour
     private PlayerObjects Myself;
     private PlayerObjects Rival;
 
-    //Inspector�Őݒ肷��̂��y�Ȃ̂�public
+    //Inspectorで設定するのが楽なのでpublic
     public HandSelector[] MyHandSelectors;
     public HandChecker[] RivalHandCheckers;
 
     public GameObject Cards;
-
     public GameObject FrontCanvas;
     public Text Message;
+
+    public AudioClip AudioAttack;
+    public AudioClip AudioAttackOffset;
+    public AudioClip AudioDamage;
+
+    public AudioSource AudioSource;
+
 
     private bool InEffect = false;
 
@@ -248,16 +254,28 @@ public class GameClient : MonoBehaviour
         MoveObject mybattle = new MoveObject { Object = Myself.Battle, Delta = (Myself.BattlePosition - Myself.Battle.transform.position) / 30 };
         MoveObject rivalbattle = new MoveObject { Object = Rival.Battle, Delta = (Rival.BattlePosition - Rival.Battle.transform.position) / 30 };
 
+        if (data.damage < 0)
+            AudioSource.PlayOneShot(AudioAttack);
         for (int i = 0; i < 30; i++)
         {
             mybattle.Step();
             rivalbattle.Step();
             yield return null;
         }
-
+        if ( data.damage == 0)
+        {
+            AudioSource.PlayOneShot(AudioAttackOffset);
+        }
+        else if (data.damage > 0)
+        {
+            AudioSource.PlayOneShot(AudioDamage);
+        }
 
         Myself.Hand.RemoveAt(data.myselect);
         Rival.Hand.RemoveAt(data.rivalselect);
+
+
+
 
         List<MoveObject> moves = new List<MoveObject>(12);
 
@@ -280,20 +298,19 @@ public class GameClient : MonoBehaviour
                 Rival.Used.Add(Rival.Battle);
                 break;
 
-            case ClientData.Phases.GameEndWin:
-                Message.text = "Win";
-                FrontCanvas.SetActive(true);
-                InEffect = false;
-                yield break;
-            case ClientData.Phases.GameEndLose:
-                Message.text = "Lose";
-                FrontCanvas.SetActive(true);
-                InEffect = false;
-                yield break;
-            case ClientData.Phases.GameEndDraw:
-                Message.text = "Draw";
-                FrontCanvas.SetActive(true);
-                InEffect = false;
+            case ClientData.Phases.GameEnd:
+                {
+                    int mylife = data.myself.decknum + data.myself.hand.Length - System.Convert.ToInt32(data.damage > 0);
+                    int rivallife = data.rival.decknum + data.rival.hand.Length - System.Convert.ToInt32(data.damage < 0);
+                    if (mylife > rivallife)
+                        Message.text = "Win";
+                    else if (mylife < rivallife)
+                        Message.text = "Lose";
+                    else
+                        Message.text = "Draw";
+                    FrontCanvas.SetActive(true);
+                    InEffect = false;
+                }
                 yield break;
         }
 
@@ -387,10 +404,11 @@ public class GameClient : MonoBehaviour
         if (Rival.Used.Count > 1)
             SetSortingGroupOrder(Rival.Used[Rival.Used.Count - 2], 0);
 
-        List<MoveObject> moves = new List<MoveObject>(7);
-
-        moves.Add(new MoveObject() { Object = Myself.Battle, Delta = (Myself.UsedPosition - Myself.Battle.transform.position) / 30 });
-        moves.Add(new MoveObject() { Object = Rival.Battle, Delta = (Rival.UsedPosition - Rival.Battle.transform.position) / 30 });
+        List<MoveObject> moves = new List<MoveObject>(7)
+        {
+            new MoveObject() { Object = Myself.Battle, Delta = (Myself.UsedPosition - Myself.Battle.transform.position) / 30 },
+            new MoveObject() { Object = Rival.Battle, Delta = (Rival.UsedPosition - Rival.Battle.transform.position) / 30 }
+        };
 
 
         if (data.myselect >= 0)
