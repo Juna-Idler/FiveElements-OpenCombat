@@ -7,10 +7,39 @@ using UnityEngine.Rendering;
 
 public class GameClient : MonoBehaviour
 {
-
-    private readonly OfflineGameServer OfflineGameServer = new OfflineGameServer();
-
     private IGameServer Server;
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        Server = GameSceneParam.GameServer;
+        if (Server == null)
+        {
+            Server = new OfflineGameServer();
+        }
+
+        ClientData data = Server.GetData();
+
+        if (CardPrefab == null)
+            CardPrefab = Resources.Load<GameObject>("Card");
+        Card.Client = this;
+        HandSelector.Client = this;
+        HandChecker.Client = this;
+
+        CardArray = new GameObject[40];
+        for (int i = 0; i < CardArray.Length; i++)
+        {
+            CardArray[i] = Instantiate(CardPrefab);
+            CardArray[i].transform.parent = Cards.transform;
+            CardArray[i].SetActive(false);
+        }
+        CardArrayIndex = 0;
+
+
+        InitializeField(data);
+        FrontCanvas.SetActive(false);
+    }
+
 
     public class PlayerObjects
     {
@@ -490,42 +519,11 @@ public class GameClient : MonoBehaviour
     }
 
 
-    // Start is called before the first frame update
-    void Start()
+
+
+    public void GoToTitle()
     {
-        OfflineGameServer.Initialize();
-        Server = OfflineGameServer;
-
-        ClientData data = Server.GetData();
-
-        if (CardPrefab == null)
-            CardPrefab = Resources.Load<GameObject>("Card");
-        Card.Client = this;
-        HandSelector.Client = this;
-        HandChecker.Client = this;
-
-        CardArray = new GameObject[40];
-        for (int i = 0; i < CardArray.Length; i++)
-        {
-            CardArray[i] = Instantiate(CardPrefab);
-            CardArray[i].transform.parent = Cards.transform;
-            CardArray[i].SetActive(false);
-        }
-        CardArrayIndex = 0;
-
-
-
-        InitializeField(data);
-        FrontCanvas.SetActive(false);
-    }
-
-    public void Retry()
-    {
-        OfflineGameServer.Initialize();
-        ClientData data = Server.GetData();
-
-        InitializeField(data);
-        FrontCanvas.SetActive(false);
+        UnityEngine.SceneManagement.SceneManager.LoadScene("TitleScene");
     }
 
 

@@ -58,6 +58,10 @@ public class OfflineGameServer : IGameServer
     private PlayerData Player1;
     private PlayerData Player2;
 
+    public OfflineGameServer()
+    {
+        Initialize();
+    }
     public void Initialize()
     {
         Phase = ClientData.Phases.BattlePhase;

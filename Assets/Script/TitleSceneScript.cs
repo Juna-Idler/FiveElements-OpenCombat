@@ -8,6 +8,10 @@ public class TitleSceneScript : MonoBehaviour
 
     public void Click()
     {
+        IGameServer server = new OfflineGameServer();
+        
+        GameSceneParam.GameServer = server;
+
         SceneManager.LoadScene("GameScene");
 
 
