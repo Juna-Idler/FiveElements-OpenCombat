@@ -6,11 +6,13 @@ using UnityEngine.SceneManagement;
 public class TitleSceneScript : MonoBehaviour
 {
 
-    public void Click()
+    public async void Click()
     {
-        IGameServer server = new OfflineGameServer();
-        
-        GameSceneParam.GameServer = server;
+        //        IGameServer server = new OfflineGameServer();
+        OnlineGameServer onserver = new OnlineGameServer();
+        await onserver.Initialize();
+
+        GameSceneParam.GameServer = onserver;
 
         SceneManager.LoadScene("GameScene");
 

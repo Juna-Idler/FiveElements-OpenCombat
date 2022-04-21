@@ -262,7 +262,6 @@ public class GameClient : MonoBehaviour
     public IEnumerator BattleEffect(ClientData data)
     {
         Data = data;
-        InEffect = true;
         Debug.Log("start coroutin:BattleEffect");
 
         for (int i = 0; i < 5; i++)
@@ -274,8 +273,8 @@ public class GameClient : MonoBehaviour
         }
         Canvas.ForceUpdateCanvases();
 
-        Myself.Battle = Myself.Hand[data.myselect];
-        Rival.Battle = Rival.Hand[data.rivalselect];
+        Myself.Battle = Myself.Hand[data.myself.select];
+        Rival.Battle = Rival.Hand[data.rival.select];
 
         SetSortingGroupOrder(Myself.Battle, 1);
         SetSortingGroupOrder(Rival.Battle, 1);
@@ -300,8 +299,8 @@ public class GameClient : MonoBehaviour
             AudioSource.PlayOneShot(AudioDamage);
         }
 
-        Myself.Hand.RemoveAt(data.myselect);
-        Rival.Hand.RemoveAt(data.rivalselect);
+        Myself.Hand.RemoveAt(data.myself.select);
+        Rival.Hand.RemoveAt(data.rival.select);
 
 
 
@@ -345,7 +344,7 @@ public class GameClient : MonoBehaviour
 
 
 
-        for (int i = data.myself.hand.Length - data.mydraw; i < data.myself.hand.Length; i++)
+        for (int i = data.myself.hand.Length - data.myself.drawcount; i < data.myself.hand.Length; i++)
         {
             GameObject o = CreateCard(data.myself.hand[i]);
             o.transform.position = Myself.DeckPosition;
@@ -358,7 +357,7 @@ public class GameClient : MonoBehaviour
             MyHandSelectors[i].Card = Myself.Hand[i];
         }
 
-        for (int i = data.rival.hand.Length - data.rivaldraw; i < data.rival.hand.Length; i++)
+        for (int i = data.rival.hand.Length - data.rival.drawcount; i < data.rival.hand.Length; i++)
         {
             GameObject o = CreateCard(data.rival.hand[i]);
             o.transform.position = Rival.DeckPosition;
@@ -418,7 +417,6 @@ public class GameClient : MonoBehaviour
     public IEnumerator DamageEffect(ClientData data)
     {
         Data = data;
-        InEffect = true;
         Debug.Log("start coroutin:DamageEffect");
         for (int i = 0; i < 5; i++)
         {
@@ -440,22 +438,22 @@ public class GameClient : MonoBehaviour
         };
 
 
-        if (data.myselect >= 0)
+        if (data.damage > 0)
         {
-            moves.Add(new MoveObject() { Object = Myself.Hand[data.myselect], Delta = (Myself.DamagePosition - Myself.Hand[data.myselect].transform.position) / 30 });
-            SetSortingGroupOrder(Myself.Hand[data.myselect], 1);
-            for (int i = 0; i < data.myselect; i++)
+            moves.Add(new MoveObject() { Object = Myself.Hand[data.myself.select], Delta = (Myself.DamagePosition - Myself.Hand[data.myself.select].transform.position) / 30 });
+            SetSortingGroupOrder(Myself.Hand[data.myself.select], 1);
+            for (int i = 0; i < data.myself.select; i++)
                 moves.Add(new MoveObject() { Object = Myself.Hand[i], Delta = (MyHandSelectors[i].transform.position - Myself.Hand[i].transform.position) / 30 });
-            for (int i = data.myselect + 1;i < Myself.Hand.Count;i++)
+            for (int i = data.myself.select + 1;i < Myself.Hand.Count;i++)
                 moves.Add(new MoveObject() { Object = Myself.Hand[i], Delta = (MyHandSelectors[i-1].transform.position - Myself.Hand[i].transform.position) / 30 });
         }
-        else if (data.rivalselect >= 0)
+        else if (data.damage < 0)
         {
-            moves.Add(new MoveObject() { Object = Rival.Hand[data.rivalselect], Delta = (Rival.DamagePosition - Rival.Hand[data.rivalselect].transform.position) / 30 });
-            SetSortingGroupOrder(Rival.Hand[data.rivalselect], 1);
-            for (int i = 0; i < data.rivalselect; i++)
+            moves.Add(new MoveObject() { Object = Rival.Hand[data.rival.select], Delta = (Rival.DamagePosition - Rival.Hand[data.rival.select].transform.position) / 30 });
+            SetSortingGroupOrder(Rival.Hand[data.rival.select], 1);
+            for (int i = 0; i < data.rival.select; i++)
                 moves.Add(new MoveObject() { Object = Rival.Hand[i], Delta = (RivalHandCheckers[i].transform.position - Rival.Hand[i].transform.position) / 30 });
-            for (int i = data.rivalselect + 1; i < Rival.Hand.Count; i++)
+            for (int i = data.rival.select + 1; i < Rival.Hand.Count; i++)
                 moves.Add(new MoveObject() { Object = Rival.Hand[i], Delta = (RivalHandCheckers[i - 1].transform.position - Rival.Hand[i].transform.position) / 30 });
         }
 
@@ -478,17 +476,17 @@ public class GameClient : MonoBehaviour
 
 
 
-        if (data.myselect >= 0)
+        if (data.damage > 0)
         {
-            GameObject o = Myself.Hand[data.myselect];
-            Myself.Hand.RemoveAt(data.myselect);
+            GameObject o = Myself.Hand[data.myself.select];
+            Myself.Hand.RemoveAt(data.myself.select);
             Myself.Damage.Add(o);
             o.SetActive(false);
         }
-        if (data.rivalselect >= 0)
+        if (data.damage < 0)
         {
-            GameObject o = Rival.Hand[data.rivalselect];
-            Rival.Hand.RemoveAt(data.rivalselect);
+            GameObject o = Rival.Hand[data.rival.select];
+            Rival.Hand.RemoveAt(data.rival.select);
             Rival.Damage.Add(o);
             o.SetActive(false);
         }
@@ -554,6 +552,7 @@ public class GameClient : MonoBehaviour
     {
         if (InEffect)
             return;
+        InEffect = true;
         switch (Phase)
         {
             case ClientData.Phases.BattlePhase:

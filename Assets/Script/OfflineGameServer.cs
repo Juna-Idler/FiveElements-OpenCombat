@@ -49,7 +49,9 @@ public class OfflineGameServer : IGameServer
                 hand = hand.ToArray(),
                 used = used.ToArray(),
                 damage = damage.ToArray(),
-                decknum = deck.Count
+                decknum = deck.Count,
+                select = -1,
+                drawcount = 0
             };
         }
     }
@@ -78,10 +80,7 @@ public class OfflineGameServer : IGameServer
         Data.myself = Player1.CreateClientPlayerData();
         Data.rival = Player2.CreateClientPlayerData();
 
-        Data.myselect = 0;
-        Data.rivalselect = 0;
         Data.damage = 0;
-        Data.mydraw = 0;
 
         return Data;
     }
@@ -113,8 +112,8 @@ public class OfflineGameServer : IGameServer
         Player1.hand.RemoveAt(index1);
         Player2.hand.RemoveAt(index2);
 
-        Data.myselect = index1;
-        Data.rivalselect = index2;
+        Data.myself.select = index1;
+        Data.rival.select = index2;
 
         CardData support1 = Player1.used.LastOrDefault();
         CardData support2 = Player2.used.LastOrDefault();
@@ -129,7 +128,7 @@ public class OfflineGameServer : IGameServer
 
             Data.phase = Phase;
             Data.damage = System.Convert.ToInt32(battleresult < 0) - System.Convert.ToInt32(battleresult > 0);
-            Data.mydraw = Data.rivaldraw = 0;
+            Data.myself.drawcount = Data.rival.drawcount = 0;
 
             Data.myself = Player1.CreateClientPlayerData();
             Data.rival = Player2.CreateClientPlayerData();
@@ -140,19 +139,19 @@ public class OfflineGameServer : IGameServer
         Player1.used.Add(battle1);
         Player2.used.Add(battle2);
 
-        Data.mydraw = Player1.DrawCard();
-        Data.rivaldraw = Player2.DrawCard();
+        Data.myself.drawcount = Player1.DrawCard();
+        Data.rival.drawcount = Player2.DrawCard();
 
         Phase = ClientData.Phases.DamagePhase;
 
         if (battleresult > 0)
         {
-            Data.rivaldraw += Player2.DrawCard();
+            Data.rival.drawcount += Player2.DrawCard();
             BattleDamage = -1;
         }
         else if (battleresult < 0)
         {
-            Data.mydraw += Player1.DrawCard();
+            Data.myself.drawcount += Player1.DrawCard();
             BattleDamage = 1;
         }
         else
@@ -170,12 +169,12 @@ public class OfflineGameServer : IGameServer
 
     void Damage(int index)
     {
-        Data.myselect = Data.rivalselect = -1;
+        Data.myself.select = Data.rival.select = -1;
 
         if (BattleDamage > 0)
         {
             Player1.hand.RemoveAt(index);
-            Data.myselect = index;
+            Data.myself.select = index;
         }
         else if (BattleDamage < 0)
         {
@@ -189,14 +188,14 @@ public class OfflineGameServer : IGameServer
                 }
             }
             Player2.hand.RemoveAt(oindex);
-            Data.rivalselect = oindex;
+            Data.rival.select = oindex;
         }
 
         Phase = ClientData.Phases.BattlePhase;
 
         Data.phase = Phase;
         Data.damage = 0;
-        Data.mydraw = Data.rivaldraw = 0;
+        Data.myself.drawcount = Data.rival.drawcount = 0;
         Data.myself = Player1.CreateClientPlayerData();
         Data.rival = Player2.CreateClientPlayerData();
     }
