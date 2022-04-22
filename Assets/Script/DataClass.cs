@@ -2,28 +2,22 @@
 using System.Collections.Generic;
 
 
-
-public class ClientData
+public class UpdateData
 {
-    public enum Phases { BattlePhase, DamagePhase, GameEnd }
+    public int phase;
+    public int damage;
 
     public class PlayerData
     {
-        public CardData[] hand; //手札
-        public int decknum;     //デッキの残り枚数
-        public CardData[] used; //戦闘で使用したカード
-        public CardData[] damage;  //ダメージとして捨てたカード
-        public int select;      //選んだ手札の位置
-        public int drawcount;   //引いたカードの枚数（Handの後ろのカード）
+        public CardData[] draw;
+        public int select;
+        public int deckcount;
     }
-
-    public Phases phase;
-
-    public PlayerData myself;   //自分
-    public PlayerData rival; //相手
-
-    public int damage;  //戦闘時のダメージ値
+    public PlayerData myself;
+    public PlayerData rival;
 }
+
+
 
 
 public class CardData

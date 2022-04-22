@@ -15,7 +15,7 @@ public class OnlineGameServer : IGameServer
     [Serializable]
     private class ReceiveData
     {
-        public ClientData.Phases p;
+        public int p;
         public int d;
 
         [Serializable]
@@ -27,14 +27,31 @@ public class OnlineGameServer : IGameServer
                 public int e;
                 public int p;
 
-                public global::CardData DataClassCardData() { return new global::CardData((global::CardData.FiveElements)e, p); }
+                public global::CardData ToCardData() { return new global::CardData((global::CardData.FiveElements)e, p); }
             }
             public CardData[] d;
             public int s;
             public int c;
+
+            public UpdateData.PlayerData ToPlayerData()
+            {
+                return new UpdateData.PlayerData { draw = d.Select(c => c.ToCardData()).ToArray(), select = s, deckcount = c };
+            }
         }
         public PlayerData y;
         public PlayerData r;
+
+        public UpdateData ToUpdateData()
+        {
+            return new UpdateData() { phase = p, damage = d, myself = y.ToPlayerData(), rival = r.ToPlayerData() };
+        }
+    }
+    [Serializable]
+    private class SendData
+    {
+        public string command = "Select";
+        public int phase;
+        public int index;
     }
 
     private ClientWebSocket Socket;
@@ -59,36 +76,14 @@ public class OnlineGameServer : IGameServer
             string json = System.Text.Encoding.UTF8.GetString(buffer.Array);
             ReceiveData data = JsonUtility.FromJson<ReceiveData>(json);
 
-            Data = new ClientData()
-            {
-                phase = data.p,
-                damage = data.d,
-                myself = new ClientData.PlayerData
-                {
-                    hand = data.y.d.Select(h=>new global::CardData((global::CardData.FiveElements)h.e,h.p)).ToArray(),
-                    used = Array.Empty<CardData>(),
-                    damage = Array.Empty<CardData>(),
-                    decknum = data.y.c,
-                    select = -1,
-                    drawcount = 0
-                },
-                rival = new ClientData.PlayerData
-                {
-                    hand = data.r.d.Select(h => new global::CardData((global::CardData.FiveElements)h.e, h.p)).ToArray(),
-                    used = Array.Empty<CardData>(),
-                    damage = Array.Empty<CardData>(),
-                    decknum = data.r.c,
-                    select = -1,
-                    drawcount = 0
-                }
-            };
+            Data = data.ToUpdateData();
         }
     }
 
 
-    private ClientData Data;
+    private UpdateData Data;
 
-    ClientData IGameServer.GetData()
+     UpdateData IGameServer.GetInitialData()
     {
         return Data;
     }
@@ -107,63 +102,9 @@ public class OnlineGameServer : IGameServer
             string json = System.Text.Encoding.UTF8.GetString(buffer.Array);
             ReceiveData data = JsonUtility.FromJson<ReceiveData>(json);
 
-            Data = Update(Data, data);
+            Data = data.ToUpdateData();
 
             context.Post(_ => callback(Data), null);
         });
     }
-
-    static ClientData Update(ClientData data,ReceiveData receive)
-    {
-        return new ClientData()
-        {
-            myself = Update(data.myself, receive.y, data.phase, data.damage),
-            rival = Update(data.rival, receive.r, data.phase, -data.damage),
-            phase = receive.p,
-            damage = receive.d
-        };
-    }
-
-    static ClientData.PlayerData Update(ClientData.PlayerData data, ReceiveData.PlayerData receive,ClientData.Phases phase,int damage)
-    {
-        ClientData.PlayerData r = new ClientData.PlayerData();
-
-        r.select = receive.s;
-        r.hand = data.hand;
-        r.used = data.used;
-        r.damage = data.damage;
-        r.decknum = receive.c;
-        r.drawcount = receive.d.Length;
-
-        List<CardData> cards = new List<CardData>(20);
-        CardData c = data.hand[receive.s];
-        if (phase == ClientData.Phases.BattlePhase)
-        {
-            cards.AddRange(data.hand);
-            cards.RemoveAt(receive.s);
-            cards.AddRange(receive.d.Select(h => new global::CardData((global::CardData.FiveElements)h.e, h.p)));
-            r.hand = cards.ToArray();
-            cards.Clear();
-
-            cards.AddRange(data.used);
-            cards.Add(c);
-            r.used = cards.ToArray();
-            cards.Clear();
-        }
-        else if (phase == ClientData.Phases.DamagePhase && damage > 0)
-        {
-            cards.AddRange(data.hand);
-            cards.RemoveAt(receive.s);
-            r.hand = cards.ToArray();
-            cards.Clear();
-
-            cards.AddRange(data.damage);
-            cards.Add(c);
-            r.damage = cards.ToArray();
-            cards.Clear();
-        }
-        return r;
-    }
-
-
 }

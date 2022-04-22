@@ -18,7 +18,7 @@ public class GameClient : MonoBehaviour
             Server = new OfflineGameServer();
         }
 
-        ClientData data = Server.GetData();
+        UpdateData data = Server.GetInitialData();
 
         if (CardPrefab == null)
             CardPrefab = Resources.Load<GameObject>("Card");
@@ -55,9 +55,7 @@ public class GameClient : MonoBehaviour
         public List<GameObject> Damage; 
         public Text DeckCount;          
     }
-    private ClientData.Phases Phase;
-
-    private ClientData Data;
+    private int Phase;
 
     private PlayerObjects Myself;
     private PlayerObjects Rival;
@@ -99,7 +97,7 @@ public class GameClient : MonoBehaviour
         sg.sortingOrder = order;
     }
 
-    public void InitializeField(ClientData data)
+    public void InitializeField(UpdateData data)
     {
         foreach (GameObject c in CardArray)
         {
@@ -107,17 +105,16 @@ public class GameClient : MonoBehaviour
         }
         CardArrayIndex = 0;
 
-        Data = data;
         Phase = data.phase;
 
         for (int i = 0; i < 5;i++)
         {
-            MyHandSelectors[i].gameObject.SetActive(i < data.myself.hand.Length);
+            MyHandSelectors[i].gameObject.SetActive(i < data.myself.draw.Length);
             MyHandSelectors[i].ResetAllOption();
         }
         for (int i = 0; i < 5; i++)
         {
-            RivalHandCheckers[i].gameObject.SetActive(i < data.rival.hand.Length);
+            RivalHandCheckers[i].gameObject.SetActive(i < data.rival.draw.Length);
             RivalHandCheckers[i].ResetAllOption();
         }
         Canvas.ForceUpdateCanvases();
@@ -135,117 +132,35 @@ public class GameClient : MonoBehaviour
         Rival.DeckPosition = GameObject.Find("YourDeck").transform.position;
 
 
-        Myself.Hand = new List<GameObject>(data.myself.hand.Length);
-        for (int i = 0; i < data.myself.hand.Length; i++)
+        Myself.Hand = new List<GameObject>(data.myself.draw.Length);
+        for (int i = 0; i < data.myself.draw.Length; i++)
         {
-            GameObject o = CreateCard(data.myself.hand[i]);
+            GameObject o = CreateCard(data.myself.draw[i]);
             o.transform.position = MyHandSelectors[i].transform.position;
             Myself.Hand.Add(o);
             MyHandSelectors[i].Card = o;
         }
 
         Myself.Used = new List<GameObject>(20);
-        foreach (var cd in data.myself.used)
-        {
-            GameObject o = CreateCard(cd);
-            o.SetActive(false);
-            Myself.Used.Add(o);
-        }
         Myself.Damage = new List<GameObject>(20);
-        foreach (var cd in data.myself.damage)
-        {
-            GameObject o = CreateCard(cd);
-            o.SetActive(false);
-            Myself.Damage.Add(o);
-        }
         GameObject tmp = GameObject.Find("MyDeckCounter");
         Myself.DeckCount = tmp.GetComponent<Text>();
-        Myself.DeckCount.text = data.myself.decknum.ToString();
+        Myself.DeckCount.text = data.myself.deckcount.ToString();
 
 
-        Rival.Hand = new List<GameObject>(data.rival.hand.Length);
-        for (int i = 0; i < data.rival.hand.Length; i++)
+        Rival.Hand = new List<GameObject>(data.rival.draw.Length);
+        for (int i = 0; i < data.rival.draw.Length; i++)
         {
-            GameObject o = CreateCard(data.rival.hand[i]);
+            GameObject o = CreateCard(data.rival.draw[i]);
             o.transform.position = RivalHandCheckers[i].transform.position;
             Rival.Hand.Add(o);
         }
 
         Rival.Used = new List<GameObject>(20);
-        foreach (var cd in data.rival.used)
-        {
-            GameObject o = CreateCard(cd);
-            o.SetActive(false);
-            Rival.Used.Add(o);
-        }
         Rival.Damage = new List<GameObject>(20);
-        foreach (var cd in data.rival.damage)
-        {
-            GameObject o = CreateCard(cd);
-            o.SetActive(false);
-            Rival.Damage.Add(o);
-        }
         tmp = GameObject.Find("YourDeckCounter");
         Rival.DeckCount = tmp.GetComponent<Text>();
-        Rival.DeckCount.text = data.rival.decknum.ToString();
-
-
-        switch (data.phase)
-        {
-            case ClientData.Phases.BattlePhase:
-                {
-                    if (Myself.Used.Count > 0)
-                    {
-                        GameObject b = Myself.Used.Last();
-                        b.SetActive(true);
-                        b.transform.position = Myself.UsedPosition;
-
-                        for (int i = 0; i < data.myself.hand.Length;i++)
-                        {
-                            int j = CardData.Chemistry(data.myself.hand[i].Element, data.myself.used.Last().Element);
-                            MyHandSelectors[i].SetPlusMinus(j);
-                        }
-                    }
-                    if (Rival.Used.Count > 0)
-                    {
-                        GameObject b = Rival.Used.Last();
-                        b.SetActive(true);
-                        b.transform.position = Rival.UsedPosition;
-
-                        for (int i = 0; i < data.rival.hand.Length; i++)
-                        {
-                            int j = CardData.Chemistry(data.rival.hand[i].Element, data.rival.used.Last().Element);
-                            RivalHandCheckers[i].SetPlusMinus(j);
-                        }
-                    }
-                }
-                break;
-            case ClientData.Phases.DamagePhase:
-                {
-                    if (Myself.Used.Count > 1)
-                    {
-                        GameObject u = Myself.Used[Myself.Used.Count-2];
-                        u.SetActive(true);
-                        u.transform.position = Myself.UsedPosition;
-                    }
-                    Myself.Battle = Myself.Used.Last();
-                    Myself.Battle.SetActive(true);
-                    Myself.Battle.transform.position = Myself.BattlePosition;
-
-                    if (Rival.Used.Count > 1)
-                    {
-                        GameObject u = Rival.Used[Rival.Used.Count - 2];
-                        u.SetActive(true);
-                        u.transform.position = Rival.UsedPosition;
-                    }
-                    Rival.Battle = Rival.Used.Last();
-                    Rival.Battle.SetActive(true);
-                    Rival.Battle.transform.position = Rival.BattlePosition;
-
-                }
-                break;
-        }
-
+        Rival.DeckCount.text = data.rival.deckcount.ToString();
     }
 
     private class MoveObject
@@ -259,22 +174,24 @@ public class GameClient : MonoBehaviour
         }
     }
 
-    public IEnumerator BattleEffect(ClientData data)
+    public IEnumerator BattleEffect(UpdateData data)
     {
-        Data = data;
-        Debug.Log("start coroutin:BattleEffect");
+        Phase = data.phase;
+
+        Myself.Battle = Myself.Hand[data.myself.select];
+        Rival.Battle = Rival.Hand[data.rival.select];
+        Myself.Hand.RemoveAt(data.myself.select);
+        Rival.Hand.RemoveAt(data.rival.select);
+
 
         for (int i = 0; i < 5; i++)
         {
             MyHandSelectors[i].ResetAllOption();
             RivalHandCheckers[i].ResetAllOption();
-            MyHandSelectors[i].gameObject.SetActive(i < data.myself.hand.Length);
-            RivalHandCheckers[i].gameObject.SetActive(i < data.rival.hand.Length);
+            MyHandSelectors[i].gameObject.SetActive(i < Myself.Hand.Count + data.myself.draw.Length);
+            RivalHandCheckers[i].gameObject.SetActive(i < Rival.Hand.Count + data.rival.draw.Length);
         }
         Canvas.ForceUpdateCanvases();
-
-        Myself.Battle = Myself.Hand[data.myself.select];
-        Rival.Battle = Rival.Hand[data.rival.select];
 
         SetSortingGroupOrder(Myself.Battle, 1);
         SetSortingGroupOrder(Rival.Battle, 1);
@@ -299,76 +216,60 @@ public class GameClient : MonoBehaviour
             AudioSource.PlayOneShot(AudioDamage);
         }
 
-        Myself.Hand.RemoveAt(data.myself.select);
-        Rival.Hand.RemoveAt(data.rival.select);
-
-
-
 
         List<MoveObject> moves = new List<MoveObject>(12);
 
-        switch (data.phase)
+        for (int i = 0;i < data.myself.draw.Length ; i++)
         {
-            case ClientData.Phases.BattlePhase:
-                Myself.Used.Add(Myself.Battle);
-                Rival.Used.Add(Rival.Battle);
-
-                if (Myself.Used.Count > 1)
-                    SetSortingGroupOrder(Myself.Used[Myself.Used.Count - 2], 0);
-                if (Rival.Used.Count > 1)
-                    SetSortingGroupOrder(Rival.Used[Rival.Used.Count - 2], 0);
-                moves.Add(new MoveObject() { Object = Myself.Battle, Delta = (Myself.UsedPosition - Myself.Battle.transform.position) / 30 });
-                moves.Add(new MoveObject() { Object = Rival.Battle, Delta = (Rival.UsedPosition - Rival.Battle.transform.position) / 30 });
-                break;
-
-            case ClientData.Phases.DamagePhase:
-                Myself.Used.Add(Myself.Battle);
-                Rival.Used.Add(Rival.Battle);
-                break;
-
-            case ClientData.Phases.GameEnd:
-                {
-                    int mylife = data.myself.decknum + data.myself.hand.Length - System.Convert.ToInt32(data.damage > 0);
-                    int rivallife = data.rival.decknum + data.rival.hand.Length - System.Convert.ToInt32(data.damage < 0);
-                    if (mylife > rivallife)
-                        Message.text = "Win";
-                    else if (mylife < rivallife)
-                        Message.text = "Lose";
-                    else
-                        Message.text = "Draw";
-                    FrontCanvas.SetActive(true);
-                    InEffect = false;
-                }
-                yield break;
-        }
-
-
-
-        for (int i = data.myself.hand.Length - data.myself.drawcount; i < data.myself.hand.Length; i++)
-        {
-            GameObject o = CreateCard(data.myself.hand[i]);
+            GameObject o = CreateCard(data.myself.draw[i]);
             o.transform.position = Myself.DeckPosition;
             Myself.Hand.Add(o);
         }
+        for (int i = 0; i < data.rival.draw.Length; i++)
+        {
+            GameObject o = CreateCard(data.rival.draw[i]);
+            o.transform.position = Rival.DeckPosition;
+            Rival.Hand.Add(o);
+        }
+        if (Phase < 0)
+        {
+            int mylife = data.myself.deckcount + Myself.Hand.Count - System.Convert.ToInt32(data.damage > 0);
+            int rivallife = data.rival.deckcount + Rival.Hand.Count - System.Convert.ToInt32(data.damage < 0);
+            if (mylife > rivallife)
+                Message.text = "Win";
+            else if (mylife < rivallife)
+                Message.text = "Lose";
+            else
+                Message.text = "Draw";
+            FrontCanvas.SetActive(true);
+            InEffect = false;
+            yield break;
+        }
+
+        if (Myself.Used.Count > 0)
+            SetSortingGroupOrder(Myself.Used[Myself.Used.Count - 1], 0);
+        if (Rival.Used.Count > 0)
+            SetSortingGroupOrder(Rival.Used[Rival.Used.Count - 1], 0);
+
+        Myself.Used.Add(Myself.Battle);
+        Rival.Used.Add(Rival.Battle);
+        if ((Phase & 1) == 0)
+        {
+            moves.Add(new MoveObject() { Object = Myself.Battle, Delta = (Myself.UsedPosition - Myself.Battle.transform.position) / 30 });
+            moves.Add(new MoveObject() { Object = Rival.Battle, Delta = (Rival.UsedPosition - Rival.Battle.transform.position) / 30 });
+        }
+
         for (int i = 0; i < Myself.Hand.Count; i++)
         {
             Vector3 step = (MyHandSelectors[i].transform.position - Myself.Hand[i].transform.position) / 30;
             moves.Add(new MoveObject { Object = Myself.Hand[i], Delta = step });
             MyHandSelectors[i].Card = Myself.Hand[i];
         }
-
-        for (int i = data.rival.hand.Length - data.rival.drawcount; i < data.rival.hand.Length; i++)
-        {
-            GameObject o = CreateCard(data.rival.hand[i]);
-            o.transform.position = Rival.DeckPosition;
-            Rival.Hand.Add(o);
-        }
         for (int i = 0; i < Rival.Hand.Count; i++)
         {
             Vector3 step = (RivalHandCheckers[i].transform.position - Rival.Hand[i].transform.position) / 30;
             moves.Add(new MoveObject { Object = Rival.Hand[i], Delta = step });
         }
-
 
         for (int i = 0; i < 30; i++)
         {
@@ -378,21 +279,20 @@ public class GameClient : MonoBehaviour
         }
 
 
-        Myself.DeckCount.text = data.myself.decknum.ToString();
-        Rival.DeckCount.text = data.rival.decknum.ToString();
+        Myself.DeckCount.text = data.myself.deckcount.ToString();
+        Rival.DeckCount.text = data.rival.deckcount.ToString();
 
-        Phase = data.phase;
 
-        if (Phase == ClientData.Phases.BattlePhase)
+        if ((Phase & 1) == 0)
         {
-            for (int i = 0; i < data.myself.hand.Length; i++)
+            for (int i = 0; i < Myself.Hand.Count; i++)
             {
-                int j = CardData.Chemistry(data.myself.hand[i].Element, data.myself.used.Last().Element);
+                int j = CardData.Chemistry(Myself.Hand[i].GetComponent<Card>().CardData.Element, Myself.Used.Last().GetComponent<Card>().CardData.Element);
                 MyHandSelectors[i].SetPlusMinus(j);
             }
-            for (int i = 0; i < data.rival.hand.Length; i++)
+            for (int i = 0; i < Rival.Hand.Count; i++)
             {
-                int j = CardData.Chemistry(data.rival.hand[i].Element, data.rival.used.Last().Element);
+                int j = CardData.Chemistry(Rival.Hand[i].GetComponent<Card>().CardData.Element, Rival.Used.Last().GetComponent<Card>().CardData.Element);
                 RivalHandCheckers[i].SetPlusMinus(j);
             }
             if (Myself.Used.Count > 1)
@@ -403,33 +303,18 @@ public class GameClient : MonoBehaviour
             {
                 Rival.Used[Rival.Used.Count - 2].SetActive(false);
             }
-
         }
         InEffect = false;
 
-        if (data.phase == ClientData.Phases.DamagePhase && data.damage <= 0)
+        if ((Phase & 1) == 1 && data.damage <= 0)
         {
-            DecideCard(0);
+            DecideCard(-1);
         }
-
     }
 
-    public IEnumerator DamageEffect(ClientData data)
+    public IEnumerator DamageEffect(UpdateData data)
     {
-        Data = data;
-        Debug.Log("start coroutin:DamageEffect");
-        for (int i = 0; i < 5; i++)
-        {
-            MyHandSelectors[i].gameObject.SetActive(i < data.myself.hand.Length);
-            RivalHandCheckers[i].gameObject.SetActive(i < data.rival.hand.Length);
-        }
-        Canvas.ForceUpdateCanvases();
-
-
-        if (Myself.Used.Count > 1)
-            SetSortingGroupOrder(Myself.Used[Myself.Used.Count - 2], 0);
-        if (Rival.Used.Count > 1)
-            SetSortingGroupOrder(Rival.Used[Rival.Used.Count - 2], 0);
+        Phase = data.phase;
 
         List<MoveObject> moves = new List<MoveObject>(7)
         {
@@ -437,24 +322,43 @@ public class GameClient : MonoBehaviour
             new MoveObject() { Object = Rival.Battle, Delta = (Rival.UsedPosition - Rival.Battle.transform.position) / 30 }
         };
 
-
+        GameObject DeleteObject = null;
         if (data.damage > 0)
         {
-            moves.Add(new MoveObject() { Object = Myself.Hand[data.myself.select], Delta = (Myself.DamagePosition - Myself.Hand[data.myself.select].transform.position) / 30 });
-            SetSortingGroupOrder(Myself.Hand[data.myself.select], 1);
-            for (int i = 0; i < data.myself.select; i++)
+            for (int i = 0; i < 5; i++)
+            {
+                MyHandSelectors[i].gameObject.SetActive(i < Myself.Hand.Count - 1);
+            }
+            Canvas.ForceUpdateCanvases();
+
+            DeleteObject = Myself.Hand[data.myself.select];
+            Myself.Hand.RemoveAt(data.myself.select);
+            Myself.Damage.Add(DeleteObject);
+
+            moves.Add(new MoveObject() { Object = DeleteObject, Delta = (Myself.DamagePosition - DeleteObject.transform.position) / 30 });
+            SetSortingGroupOrder(DeleteObject, 1);
+            for (int i = 0; i < Myself.Hand.Count; i++)
+            { 
                 moves.Add(new MoveObject() { Object = Myself.Hand[i], Delta = (MyHandSelectors[i].transform.position - Myself.Hand[i].transform.position) / 30 });
-            for (int i = data.myself.select + 1;i < Myself.Hand.Count;i++)
-                moves.Add(new MoveObject() { Object = Myself.Hand[i], Delta = (MyHandSelectors[i-1].transform.position - Myself.Hand[i].transform.position) / 30 });
+                MyHandSelectors[i].Card = Myself.Hand[i];
+            }
         }
         else if (data.damage < 0)
         {
-            moves.Add(new MoveObject() { Object = Rival.Hand[data.rival.select], Delta = (Rival.DamagePosition - Rival.Hand[data.rival.select].transform.position) / 30 });
-            SetSortingGroupOrder(Rival.Hand[data.rival.select], 1);
-            for (int i = 0; i < data.rival.select; i++)
+            for (int i = 0; i < 5; i++)
+            {
+                RivalHandCheckers[i].gameObject.SetActive(i < Rival.Hand.Count - 1);
+            }
+            Canvas.ForceUpdateCanvases();
+
+            DeleteObject = Rival.Hand[data.rival.select];
+            Rival.Hand.RemoveAt(data.rival.select);
+            Rival.Damage.Add(DeleteObject);
+
+            moves.Add(new MoveObject() { Object = DeleteObject, Delta = (Rival.DamagePosition - DeleteObject.transform.position) / 30 });
+            SetSortingGroupOrder(DeleteObject, 1);
+            for (int i = 0; i < Rival.Hand.Count; i++)
                 moves.Add(new MoveObject() { Object = Rival.Hand[i], Delta = (RivalHandCheckers[i].transform.position - Rival.Hand[i].transform.position) / 30 });
-            for (int i = data.rival.select + 1; i < Rival.Hand.Count; i++)
-                moves.Add(new MoveObject() { Object = Rival.Hand[i], Delta = (RivalHandCheckers[i - 1].transform.position - Rival.Hand[i].transform.position) / 30 });
         }
 
         for (int i = 0; i < 30; i++)
@@ -475,44 +379,21 @@ public class GameClient : MonoBehaviour
         }
 
 
+        DeleteObject.SetActive(false);
 
-        if (data.damage > 0)
-        {
-            GameObject o = Myself.Hand[data.myself.select];
-            Myself.Hand.RemoveAt(data.myself.select);
-            Myself.Damage.Add(o);
-            o.SetActive(false);
-        }
-        if (data.damage < 0)
-        {
-            GameObject o = Rival.Hand[data.rival.select];
-            Rival.Hand.RemoveAt(data.rival.select);
-            Rival.Damage.Add(o);
-            o.SetActive(false);
-        }
+
 
         for (int i = 0; i < Myself.Hand.Count; i++)
         {
-            Myself.Hand[i].transform.position = MyHandSelectors[i].transform.position;
-            MyHandSelectors[i].Card = Myself.Hand[i];
+            int j = CardData.Chemistry(Myself.Hand[i].GetComponent<Card>().CardData.Element, Myself.Used.Last().GetComponent<Card>().CardData.Element);
+            MyHandSelectors[i].SetPlusMinus(j);
         }
         for (int i = 0; i < Rival.Hand.Count; i++)
         {
-            Rival.Hand[i].transform.position = RivalHandCheckers[i].transform.position;
-        }
-
-        Phase = data.phase;
-
-        for (int i = 0; i < data.myself.hand.Length; i++)
-        {
-            int j = CardData.Chemistry(data.myself.hand[i].Element, data.myself.used.Last().Element);
-            MyHandSelectors[i].SetPlusMinus(j);
-        }
-        for (int i = 0; i < data.rival.hand.Length; i++)
-        {
-            int j = CardData.Chemistry(data.rival.hand[i].Element, data.rival.used.Last().Element);
+            int j = CardData.Chemistry(Rival.Hand[i].GetComponent<Card>().CardData.Element, Rival.Used.Last().GetComponent<Card>().CardData.Element);
             RivalHandCheckers[i].SetPlusMinus(j);
         }
+
         InEffect = false;
     }
 
@@ -527,22 +408,24 @@ public class GameClient : MonoBehaviour
 
     public void SelectMyCard(int index)
     {
-        if (Phase == ClientData.Phases.BattlePhase)
+        if ((Phase & 1) == 0)
         {
-            for (int i = 0; i < Data.rival.hand.Length;i++)
+            for (int i = 0; i < Rival.Hand.Count; i++)
             {
-                int j = CardData.Judge(Data.myself.hand[index], Data.rival.hand[i], Data.myself.used.LastOrDefault(), Data.rival.used.LastOrDefault());
+                int j = CardData.Judge(Myself.Hand[index].GetComponent<Card>().CardData,Rival.Hand[i].GetComponent<Card>().CardData,
+                                        Myself.Used.LastOrDefault()?.GetComponent<Card>().CardData, Rival.Used.LastOrDefault()?.GetComponent<Card>().CardData);
                 RivalHandCheckers[i].SetMaruBatu(j);
             }
         }
     }
     public void SelectRivalCard(int index)
     {
-        if (Phase == ClientData.Phases.BattlePhase)
+        if ((Phase & 1) == 0)
         {
-            for (int i = 0; i < Data.myself.hand.Length; i++)
+            for (int i = 0; i < Myself.Hand.Count; i++)
             {
-                int j = CardData.Judge(Data.myself.hand[i], Data.rival.hand[index], Data.myself.used.LastOrDefault(), Data.rival.used.LastOrDefault());
+                int j = CardData.Judge(Rival.Hand[index].GetComponent<Card>().CardData, Myself.Hand[i].GetComponent<Card>().CardData,
+                                        Rival.Used.LastOrDefault()?.GetComponent<Card>().CardData, Myself.Used.LastOrDefault()?.GetComponent<Card>().CardData);
                 MyHandSelectors[i].SetMaruBatu(j);
             }
         }
@@ -552,26 +435,19 @@ public class GameClient : MonoBehaviour
     {
         if (InEffect)
             return;
+
+        if (Phase < 0)
+            return;
+
         InEffect = true;
-        switch (Phase)
+        if ((Phase & 1) == 0)
         {
-            case ClientData.Phases.BattlePhase:
-                {
-                    Server.SendSelect(index, (data) => StartCoroutine(BattleEffect(data)));
-
-                    break;
-                }
-            case ClientData.Phases.DamagePhase:
-                {
-                    Server.SendSelect(index, (data) => StartCoroutine(DamageEffect(data)));
-
-                    break;
-                }
-            default:
-                break;
+            Server.SendSelect(index, (data) => StartCoroutine(BattleEffect(data)));
+        }
+        else
+        {
+            Server.SendSelect(index, (data) => StartCoroutine(DamageEffect(data)));
         }
     }
-
-
 
 }

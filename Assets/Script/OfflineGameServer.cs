@@ -14,6 +14,9 @@ public class OfflineGameServer : IGameServer
         public List<CardData> used = new List<CardData>(20);
         public List<CardData> damage = new List<CardData>(10);
 
+        public int select = -1;
+        public List<CardData> draw = new List<CardData>(2);
+
         public PlayerData()
         {
             CardData[] array = new CardData[20];
@@ -27,38 +30,31 @@ public class OfflineGameServer : IGameServer
                 }
             }
             deck = new LinkedList<CardData>(array.OrderBy(x => random.Next()));
-            for (int i = 0; i < 4; i++)
+            DrawCard(4);
+        }
+        public void DrawCard(int count)
+        {
+            draw.Clear();
+            for (int i = 0; i < count; i++)
             {
-                DrawCard();
+                if (deck.Count > 0)
+                {
+                    hand.Add(deck.Last.Value);
+                    draw.Add(deck.Last.Value);
+                    deck.RemoveLast();
+                }
             }
         }
-        public int DrawCard()
+        public UpdateData.PlayerData CreateUpdatePlayerData()
         {
-            if (deck.Count > 0)
-            {
-                hand.Add(deck.Last.Value);
-                deck.RemoveLast();
-                return 1;
-            }
-            return 0;
-        }
-        public ClientData.PlayerData CreateClientPlayerData()
-        {
-            return new ClientData.PlayerData
-            {
-                hand = hand.ToArray(),
-                used = used.ToArray(),
-                damage = damage.ToArray(),
-                decknum = deck.Count,
-                select = -1,
-                drawcount = 0
-            };
+            return new UpdateData.PlayerData { draw = draw.ToArray(), select = select, deckcount = deck.Count };
         }
     }
-    private ClientData.Phases Phase;
+    private int Phase;
     private int BattleDamage; //BattlePhaseでダメージが発生した（+:Player1にダメージ -:Player2にダメージ）
     private PlayerData Player1;
     private PlayerData Player2;
+
 
     public OfflineGameServer()
     {
@@ -66,42 +62,45 @@ public class OfflineGameServer : IGameServer
     }
     public void Initialize()
     {
-        Phase = ClientData.Phases.BattlePhase;
+        Phase = 0;
+        BattleDamage = 0;
         Player1 = new PlayerData();
         Player2 = new PlayerData();
-
-        Data = new ClientData();
     }
 
-    private ClientData Data;
-
-    ClientData IGameServer.GetData()
+    private UpdateData ToUpdateData()
     {
-        Data.myself = Player1.CreateClientPlayerData();
-        Data.rival = Player2.CreateClientPlayerData();
+        return new UpdateData()
+        {
+            phase = Phase,
+            damage = BattleDamage,
+            myself = Player1.CreateUpdatePlayerData(),
+            rival = Player2.CreateUpdatePlayerData()
+        };
+    }
 
-        Data.damage = 0;
-
-        return Data;
+    UpdateData IGameServer.GetInitialData()
+    {
+        return ToUpdateData();
     }
 
     void IGameServer.SendSelect(int index,IGameServer.SendSelectCallback callback)
     {
         index = System.Math.Min(System.Math.Max(0, index), Player1.hand.Count - 1);
 
-        switch (Phase)
+        if (Phase < 0)
+            return;
+
+        if ((Phase & 1) == 1)
         {
-            case ClientData.Phases.BattlePhase:
-                Battle(index, random.Next(0, Player2.hand.Count));
-                break;
-            case ClientData.Phases.DamagePhase:
-                Damage(index);
-                break;
-            case ClientData.Phases.GameEnd:
-                break;
+            Damage(index);
+        }
+        else
+        {
+            Battle(index, random.Next(0, Player2.hand.Count));
         }
 
-        callback(Data);
+        callback(ToUpdateData());
     }
 
     void Battle(int index1, int index2)
@@ -109,11 +108,11 @@ public class OfflineGameServer : IGameServer
         CardData battle1 = Player1.hand[index1];
         CardData battle2 = Player2.hand[index2];
 
+        Player1.select = index1;
+        Player2.select = index2;
+
         Player1.hand.RemoveAt(index1);
         Player2.hand.RemoveAt(index2);
-
-        Data.myself.select = index1;
-        Data.rival.select = index2;
 
         CardData support1 = Player1.used.LastOrDefault();
         CardData support2 = Player2.used.LastOrDefault();
@@ -124,79 +123,67 @@ public class OfflineGameServer : IGameServer
         int life2 = Player2.hand.Count + Player2.deck.Count - System.Convert.ToInt32(battleresult > 0);
         if (life1 <= 0 || life2 <= 0)   //決着がつく場合
         {
-            Phase = ClientData.Phases.GameEnd;
-
-            Data.phase = Phase;
-            Data.damage = System.Convert.ToInt32(battleresult < 0) - System.Convert.ToInt32(battleresult > 0);
-            Data.myself.drawcount = Data.rival.drawcount = 0;
-
-            Data.myself = Player1.CreateClientPlayerData();
-            Data.rival = Player2.CreateClientPlayerData();
-
+            Phase = -1;
+            BattleDamage = -battleresult;
+            Player1.DrawCard(0);
+            Player2.DrawCard(0);
             return;
         }
 
         Player1.used.Add(battle1);
         Player2.used.Add(battle2);
 
-        Data.myself.drawcount = Player1.DrawCard();
-        Data.rival.drawcount = Player2.DrawCard();
 
-        Phase = ClientData.Phases.DamagePhase;
 
         if (battleresult > 0)
         {
-            Data.rival.drawcount += Player2.DrawCard();
+            Player1.DrawCard(1);
+            Player2.DrawCard(2);
             BattleDamage = -1;
         }
         else if (battleresult < 0)
         {
-            Data.myself.drawcount += Player1.DrawCard();
+            Player1.DrawCard(2);
+            Player2.DrawCard(1);
             BattleDamage = 1;
         }
         else
         {
-            Phase = ClientData.Phases.BattlePhase;
+            Player1.DrawCard(1);
+            Player2.DrawCard(1);
             BattleDamage = 0;
         }
-        Data.phase = Phase;
-        Data.damage = BattleDamage;
-        Data.myself = Player1.CreateClientPlayerData();
-        Data.rival = Player2.CreateClientPlayerData();
-
+        Phase += 1 + ((battleresult == 0) ? 1 : 0);
     }
 
 
     void Damage(int index)
     {
-        Data.myself.select = Data.rival.select = -1;
-
         if (BattleDamage > 0)
         {
+            Player1.damage.Add(Player1.hand[index]);
             Player1.hand.RemoveAt(index);
-            Data.myself.select = index;
+            Player1.select = index;
         }
         else if (BattleDamage < 0)
         {
-            int min = 256, oindex = 0;
+            int min = 256, rindex = 0;
             for (int i = 0; i < Player2.hand.Count; i++)
             {
                 if (Player2.hand[i].Power < min)
                 {
                     min = Player2.hand[i].Power;
-                    oindex = i;
+                    rindex = i;
                 }
             }
-            Player2.hand.RemoveAt(oindex);
-            Data.rival.select = oindex;
+            Player2.damage.Add(Player2.hand[rindex]);
+            Player2.hand.RemoveAt(rindex);
+            Player2.select = rindex;
         }
 
-        Phase = ClientData.Phases.BattlePhase;
+        Phase++;
 
-        Data.phase = Phase;
-        Data.damage = 0;
-        Data.myself.drawcount = Data.rival.drawcount = 0;
-        Data.myself = Player1.CreateClientPlayerData();
-        Data.rival = Player2.CreateClientPlayerData();
+        Player1.DrawCard(0);
+        Player2.DrawCard(0);
     }
 }

@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 
 public interface IGameServer
 {
-    public ClientData GetData();
+    public UpdateData GetInitialData();
 
-    delegate void SendSelectCallback(ClientData data);
+    delegate void SendSelectCallback(UpdateData data);
     public void SendSelect(int index,SendSelectCallback callback);
 
 }

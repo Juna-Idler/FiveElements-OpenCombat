@@ -5,8 +5,7 @@ using UnityEngine;
 public class Card : MonoBehaviour
 {
 
-    public CardData.FiveElements Element;
-    public int Power;
+    public CardData CardData;
 
 
     public static GameClient Client;
@@ -23,18 +22,17 @@ public class Card : MonoBehaviour
 
     public void Initialize(CardData data)
     {
-        Element = data.Element;
-        Power = data.Power;
+        CardData = data;
 
         if (NumberSprites == null)
         {
             NumberSprites = Resources.LoadAll<Sprite>("Number");
         }
-        Sprite image = NumberSprites[Power];
+        Sprite image = NumberSprites[CardData.Power];
 
         GameObject face = transform.GetChild(0).gameObject;
         SpriteRenderer renderer = face.GetComponent<SpriteRenderer>();
-        renderer.color = ElementColors[(int)Element];
+        renderer.color = ElementColors[(int)CardData.Element];
         GameObject number = transform.GetChild(0).GetChild(0).gameObject;
         SpriteRenderer sprite = number.GetComponent<SpriteRenderer>();
         sprite.sprite = image;
