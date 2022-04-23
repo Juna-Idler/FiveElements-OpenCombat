@@ -38,6 +38,20 @@ public class GameClient : MonoBehaviour
 
         InitializeField(data);
         FrontCanvas.SetActive(false);
+        PhaseStartTime = Time.realtimeSinceStartup;
+    }
+
+    void Update()
+    {
+        if (PhaseStartTime > 0)
+        {
+            float sec = Time.realtimeSinceStartup - PhaseStartTime;
+            Timer.text = sec.ToString("F");
+        }
+        else
+        {
+            Timer.text = "";
+        }
     }
 
 
@@ -49,11 +63,11 @@ public class GameClient : MonoBehaviour
         public Vector3 DeckPosition;
 
         public GameObject Battle;
-        
-        public List<GameObject> Hand;   
-        public List<GameObject> Used;   
-        public List<GameObject> Damage; 
-        public Text DeckCount;          
+
+        public List<GameObject> Hand;
+        public List<GameObject> Used;
+        public List<GameObject> Damage;
+        public Text DeckCount;
     }
     private int Phase;
 
@@ -64,6 +78,8 @@ public class GameClient : MonoBehaviour
     public HandSelector[] MyHandSelectors;
     public HandChecker[] RivalHandCheckers;
 
+    public Text Timer;
+    private float PhaseStartTime;
 
     public GameObject Cards;
     public GameObject FrontCanvas;
@@ -76,7 +92,9 @@ public class GameClient : MonoBehaviour
     public AudioSource AudioSource;
 
 
-    public bool InEffect = false;
+    public bool InEffect { get; private set; } = false;
+
+
 
     private static GameObject CardPrefab;
 
@@ -321,6 +339,8 @@ public class GameClient : MonoBehaviour
         {
             DecideCard(-1);
         }
+        else
+            PhaseStartTime = Time.realtimeSinceStartup;
     }
 
     public IEnumerator DamageEffect(UpdateData data)
@@ -389,10 +409,7 @@ public class GameClient : MonoBehaviour
             Rival.Used[Rival.Used.Count - 2].SetActive(false);
         }
 
-
         DeleteObject.SetActive(false);
-
-
 
         for (int i = 0; i < Myself.Hand.Count; i++)
         {
@@ -406,6 +423,7 @@ public class GameClient : MonoBehaviour
         }
 
         InEffect = false;
+        PhaseStartTime = Time.realtimeSinceStartup;
     }
 
 
@@ -451,6 +469,7 @@ public class GameClient : MonoBehaviour
             return;
 
         InEffect = true;
+        PhaseStartTime = -1;
         if ((Phase & 1) == 0)
         {
             Server.SendSelect(index, (data) => StartCoroutine(BattleEffect(data)));
