@@ -93,7 +93,9 @@ public class OnlineGameServer : IGameServer
         System.Threading.SynchronizationContext context = System.Threading.SynchronizationContext.Current;
         Task.Run(async () =>
         {
-            string select_command = "{\"command\":\"Select\",\"index\":"+ index + "}";
+//            SendData send = new SendData { command = "Select", phase = Data.phase, index = index };
+//            string select_command = JsonUtility.ToJson(send);
+            string select_command = $@"{{""command"":""Select"",""phase"":{Data.phase},""index"":{index}}}";
             ArraySegment<byte> buffer = new ArraySegment<byte>(System.Text.Encoding.UTF8.GetBytes(select_command));
             await Socket.SendAsync(buffer, WebSocketMessageType.Text, true, System.Threading.CancellationToken.None);
 
@@ -106,5 +108,11 @@ public class OnlineGameServer : IGameServer
 
             context.Post(_ => callback(Data), null);
         });
+    }
+
+    void IGameServer.Terminalize()
+    {
+        Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "", CancellationToken.None);
+        Socket = null;
     }
 }

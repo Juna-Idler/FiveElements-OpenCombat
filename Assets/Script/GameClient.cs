@@ -64,6 +64,7 @@ public class GameClient : MonoBehaviour
     public HandSelector[] MyHandSelectors;
     public HandChecker[] RivalHandCheckers;
 
+
     public GameObject Cards;
     public GameObject FrontCanvas;
     public Text Message;
@@ -75,7 +76,7 @@ public class GameClient : MonoBehaviour
     public AudioSource AudioSource;
 
 
-    private bool InEffect = false;
+    public bool InEffect = false;
 
     private static GameObject CardPrefab;
 
@@ -137,6 +138,7 @@ public class GameClient : MonoBehaviour
         {
             GameObject o = CreateCard(data.myself.draw[i]);
             o.transform.position = MyHandSelectors[i].transform.position;
+            SetSortingGroupOrder(o, 5);
             Myself.Hand.Add(o);
             MyHandSelectors[i].Card = o;
         }
@@ -153,6 +155,7 @@ public class GameClient : MonoBehaviour
         {
             GameObject o = CreateCard(data.rival.draw[i]);
             o.transform.position = RivalHandCheckers[i].transform.position;
+            SetSortingGroupOrder(o, 5);
             Rival.Hand.Add(o);
         }
 
@@ -193,8 +196,8 @@ public class GameClient : MonoBehaviour
         }
         Canvas.ForceUpdateCanvases();
 
-        SetSortingGroupOrder(Myself.Battle, 1);
-        SetSortingGroupOrder(Rival.Battle, 1);
+        SetSortingGroupOrder(Myself.Battle, 6);
+        SetSortingGroupOrder(Rival.Battle, 6);
 
         MoveObject mybattle = new MoveObject { Object = Myself.Battle, Delta = (Myself.BattlePosition - Myself.Battle.transform.position) / 30 };
         MoveObject rivalbattle = new MoveObject { Object = Rival.Battle, Delta = (Rival.BattlePosition - Rival.Battle.transform.position) / 30 };
@@ -207,6 +210,9 @@ public class GameClient : MonoBehaviour
             rivalbattle.Step();
             yield return null;
         }
+        SetSortingGroupOrder(Myself.Battle, 1);
+        SetSortingGroupOrder(Rival.Battle, 1);
+
         if ( data.damage == 0)
         {
             AudioSource.PlayOneShot(AudioAttackOffset);
@@ -223,12 +229,14 @@ public class GameClient : MonoBehaviour
         {
             GameObject o = CreateCard(data.myself.draw[i]);
             o.transform.position = Myself.DeckPosition;
+            SetSortingGroupOrder(o,5);
             Myself.Hand.Add(o);
         }
         for (int i = 0; i < data.rival.draw.Length; i++)
         {
             GameObject o = CreateCard(data.rival.draw[i]);
             o.transform.position = Rival.DeckPosition;
+            SetSortingGroupOrder(o,5);
             Rival.Hand.Add(o);
         }
         if (Phase < 0)
@@ -243,6 +251,9 @@ public class GameClient : MonoBehaviour
                 Message.text = "Draw";
             FrontCanvas.SetActive(true);
             InEffect = false;
+
+
+            Server = null;
             yield break;
         }
 
@@ -336,7 +347,7 @@ public class GameClient : MonoBehaviour
             Myself.Damage.Add(DeleteObject);
 
             moves.Add(new MoveObject() { Object = DeleteObject, Delta = (Myself.DamagePosition - DeleteObject.transform.position) / 30 });
-            SetSortingGroupOrder(DeleteObject, 1);
+            SetSortingGroupOrder(DeleteObject, 10);
             for (int i = 0; i < Myself.Hand.Count; i++)
             { 
                 moves.Add(new MoveObject() { Object = Myself.Hand[i], Delta = (MyHandSelectors[i].transform.position - Myself.Hand[i].transform.position) / 30 });
@@ -356,7 +367,7 @@ public class GameClient : MonoBehaviour
             Rival.Damage.Add(DeleteObject);
 
             moves.Add(new MoveObject() { Object = DeleteObject, Delta = (Rival.DamagePosition - DeleteObject.transform.position) / 30 });
-            SetSortingGroupOrder(DeleteObject, 1);
+            SetSortingGroupOrder(DeleteObject, 10);
             for (int i = 0; i < Rival.Hand.Count; i++)
                 moves.Add(new MoveObject() { Object = Rival.Hand[i], Delta = (RivalHandCheckers[i].transform.position - Rival.Hand[i].transform.position) / 30 });
         }

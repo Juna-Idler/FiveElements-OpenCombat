@@ -102,6 +102,9 @@ public class OfflineGameServer : IGameServer
 
         callback(ToUpdateData());
     }
+    void IGameServer.Terminalize()
+    {
+    }
 
     void Battle(int index1, int index2)
     {

@@ -10,5 +10,6 @@ public interface IGameServer
     delegate void SendSelectCallback(UpdateData data);
     public void SendSelect(int index,SendSelectCallback callback);
 
+    void Terminalize();
 }
 
