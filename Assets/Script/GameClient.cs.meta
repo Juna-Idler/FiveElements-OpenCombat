@@ -4,12 +4,13 @@ MonoImporter:
   externalObjects: {}
   serializedVersion: 2
   defaultReferences:
+  - Timer: {instanceID: 0}
   - Cards: {instanceID: 0}
   - FrontCanvas: {instanceID: 0}
   - Message: {instanceID: 0}
   - AudioAttack: {instanceID: 0}
   - AudioAttackOffset: {instanceID: 0}
-  - AudioDamage: {fileID: 8300000, guid: e6daa52031714ba448fe87916e1de0e8, type: 3}
+  - AudioDamage: {instanceID: 0}
   - AudioSource: {instanceID: 0}
   executionOrder: 0
   icon: {instanceID: 0}

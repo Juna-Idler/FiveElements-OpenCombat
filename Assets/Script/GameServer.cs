@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 
 public interface IGameServer
 {
-    public UpdateData GetInitialData();
+    public InitialData GetInitialData();
 
     delegate void SendSelectCallback(UpdateData data);
-    public void SendSelect(int index,SendSelectCallback callback);
+    public void SendSelect(int phase,int index,SendSelectCallback callback);
 
     void Terminalize();
 }

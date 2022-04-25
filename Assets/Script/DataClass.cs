@@ -17,6 +17,19 @@ public class UpdateData
     public PlayerData rival;
 }
 
+public class InitialData
+{
+    public int battleSelectTimeLimitSecond;
+    public int damageSelectTimeLimitSecond;
+
+    public string myname;
+    public string rivalname;
+
+    public CardData[] myhand;
+    public CardData[] rivalhand;
+    public int mydeckcount;
+    public int rivaldeckcount;
+}
 
 
 

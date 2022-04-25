@@ -76,26 +76,36 @@ public class OnlineGameServer : IGameServer
             string json = System.Text.Encoding.UTF8.GetString(buffer.Array);
             ReceiveData data = JsonUtility.FromJson<ReceiveData>(json);
 
-            Data = data.ToUpdateData();
+            InitialData = new InitialData()
+            {
+                battleSelectTimeLimitSecond = 20,
+                damageSelectTimeLimitSecond = 10,
+                myhand = data.y.d.Select(c => c.ToCardData()).ToArray(),
+                rivalhand = data.r.d.Select(c => c.ToCardData()).ToArray(),
+                mydeckcount = data.y.c,
+                rivaldeckcount = data.r.c,
+                myname = "my name",
+                rivalname = "rival name"
+            };
         }
     }
 
 
-    private UpdateData Data;
+    private InitialData InitialData;
 
-     UpdateData IGameServer.GetInitialData()
+    InitialData IGameServer.GetInitialData()
     {
-        return Data;
+        return InitialData;
     }
 
-    void IGameServer.SendSelect(int index, IGameServer.SendSelectCallback callback)
+    void IGameServer.SendSelect(int phase,int index, IGameServer.SendSelectCallback callback)
     {
         System.Threading.SynchronizationContext context = System.Threading.SynchronizationContext.Current;
         Task.Run(async () =>
         {
 //            SendData send = new SendData { command = "Select", phase = Data.phase, index = index };
 //            string select_command = JsonUtility.ToJson(send);
-            string select_command = $@"{{""command"":""Select"",""phase"":{Data.phase},""index"":{index}}}";
+            string select_command = $@"{{""command"":""Select"",""phase"":{phase},""index"":{index}}}";
             ArraySegment<byte> buffer = new ArraySegment<byte>(System.Text.Encoding.UTF8.GetBytes(select_command));
             await Socket.SendAsync(buffer, WebSocketMessageType.Text, true, System.Threading.CancellationToken.None);
 
@@ -104,9 +114,7 @@ public class OnlineGameServer : IGameServer
             string json = System.Text.Encoding.UTF8.GetString(buffer.Array);
             ReceiveData data = JsonUtility.FromJson<ReceiveData>(json);
 
-            Data = data.ToUpdateData();
-
-            context.Post(_ => callback(Data), null);
+            context.Post(_ => callback(data.ToUpdateData()), null);
         });
     }
 

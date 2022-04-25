@@ -79,12 +79,22 @@ public class OfflineGameServer : IGameServer
         };
     }
 
-    UpdateData IGameServer.GetInitialData()
+    InitialData IGameServer.GetInitialData()
     {
-        return ToUpdateData();
+        return new InitialData()
+        {
+            battleSelectTimeLimitSecond = 20,
+            damageSelectTimeLimitSecond = 10,
+            myhand = Player1.hand.ToArray(),
+            rivalhand = Player2.hand.ToArray(),
+            mydeckcount = Player1.deck.Count,
+            rivaldeckcount = Player2.deck.Count,
+            myname = "my name",
+            rivalname = "CPU"
+        };
     }
 
-    void IGameServer.SendSelect(int index,IGameServer.SendSelectCallback callback)
+    void IGameServer.SendSelect(int phase,int index,IGameServer.SendSelectCallback callback)
     {
         index = System.Math.Min(System.Math.Max(0, index), Player1.hand.Count - 1);
 

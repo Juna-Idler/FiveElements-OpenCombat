@@ -18,7 +18,7 @@ public class GameClient : MonoBehaviour
             Server = new OfflineGameServer();
         }
 
-        UpdateData data = Server.GetInitialData();
+        InitialData data = Server.GetInitialData();
 
         if (CardPrefab == null)
             CardPrefab = Resources.Load<GameObject>("Card");
@@ -46,7 +46,11 @@ public class GameClient : MonoBehaviour
         if (PhaseStartTime > 0)
         {
             float sec = Time.realtimeSinceStartup - PhaseStartTime;
-            Timer.text = sec.ToString("F");
+            float remain = (((Phase & 1) == 0) ? BattleTimeLimit : DamageTimeLimit) - sec;
+            if (remain < 0)
+                DecideCard(0);
+            else
+                Timer.text = remain.ToString("F");
         }
         else
         {
@@ -69,7 +73,7 @@ public class GameClient : MonoBehaviour
         public List<GameObject> Damage;
         public Text DeckCount;
     }
-    private int Phase;
+    public int Phase { get; private set; }
 
     private PlayerObjects Myself;
     private PlayerObjects Rival;
@@ -80,6 +84,10 @@ public class GameClient : MonoBehaviour
 
     public Text Timer;
     private float PhaseStartTime;
+
+    private float BattleTimeLimit;
+    private float DamageTimeLimit;
+
 
     public GameObject Cards;
     public GameObject FrontCanvas;
@@ -116,7 +124,7 @@ public class GameClient : MonoBehaviour
         sg.sortingOrder = order;
     }
 
-    public void InitializeField(UpdateData data)
+    public void InitializeField(InitialData data)
     {
         foreach (GameObject c in CardArray)
         {
@@ -124,16 +132,16 @@ public class GameClient : MonoBehaviour
         }
         CardArrayIndex = 0;
 
-        Phase = data.phase;
+        Phase = 0;
 
         for (int i = 0; i < 5;i++)
         {
-            MyHandSelectors[i].gameObject.SetActive(i < data.myself.draw.Length);
+            MyHandSelectors[i].gameObject.SetActive(i < data.myhand.Length);
             MyHandSelectors[i].ResetAllOption();
         }
         for (int i = 0; i < 5; i++)
         {
-            RivalHandCheckers[i].gameObject.SetActive(i < data.rival.draw.Length);
+            RivalHandCheckers[i].gameObject.SetActive(i < data.rivalhand.Length);
             RivalHandCheckers[i].ResetAllOption();
         }
         Canvas.ForceUpdateCanvases();
@@ -151,10 +159,10 @@ public class GameClient : MonoBehaviour
         Rival.DeckPosition = GameObject.Find("YourDeck").transform.position;
 
 
-        Myself.Hand = new List<GameObject>(data.myself.draw.Length);
-        for (int i = 0; i < data.myself.draw.Length; i++)
+        Myself.Hand = new List<GameObject>(data.myhand.Length + 1);
+        for (int i = 0; i < data.myhand.Length; i++)
         {
-            GameObject o = CreateCard(data.myself.draw[i]);
+            GameObject o = CreateCard(data.myhand[i]);
             o.transform.position = MyHandSelectors[i].transform.position;
             SetSortingGroupOrder(o, 5);
             Myself.Hand.Add(o);
@@ -165,13 +173,13 @@ public class GameClient : MonoBehaviour
         Myself.Damage = new List<GameObject>(20);
         GameObject tmp = GameObject.Find("MyDeckCounter");
         Myself.DeckCount = tmp.GetComponent<Text>();
-        Myself.DeckCount.text = data.myself.deckcount.ToString();
+        Myself.DeckCount.text = data.mydeckcount.ToString();
 
 
-        Rival.Hand = new List<GameObject>(data.rival.draw.Length);
-        for (int i = 0; i < data.rival.draw.Length; i++)
+        Rival.Hand = new List<GameObject>(data.rivalhand.Length + 1);
+        for (int i = 0; i < data.rivalhand.Length; i++)
         {
-            GameObject o = CreateCard(data.rival.draw[i]);
+            GameObject o = CreateCard(data.rivalhand[i]);
             o.transform.position = RivalHandCheckers[i].transform.position;
             SetSortingGroupOrder(o, 5);
             Rival.Hand.Add(o);
@@ -181,7 +189,10 @@ public class GameClient : MonoBehaviour
         Rival.Damage = new List<GameObject>(20);
         tmp = GameObject.Find("YourDeckCounter");
         Rival.DeckCount = tmp.GetComponent<Text>();
-        Rival.DeckCount.text = data.rival.deckcount.ToString();
+        Rival.DeckCount.text = data.rivaldeckcount.ToString();
+
+        BattleTimeLimit = data.battleSelectTimeLimitSecond;
+        DamageTimeLimit = data.damageSelectTimeLimitSecond;
     }
 
     private class MoveObject
@@ -197,8 +208,6 @@ public class GameClient : MonoBehaviour
 
     public IEnumerator BattleEffect(UpdateData data)
     {
-        Phase = data.phase;
-
         Myself.Battle = Myself.Hand[data.myself.select];
         Rival.Battle = Rival.Hand[data.rival.select];
         Myself.Hand.RemoveAt(data.myself.select);
@@ -257,7 +266,7 @@ public class GameClient : MonoBehaviour
             SetSortingGroupOrder(o,5);
             Rival.Hand.Add(o);
         }
-        if (Phase < 0)
+        if (data.phase < 0)
         {
             int mylife = data.myself.deckcount + Myself.Hand.Count - System.Convert.ToInt32(data.damage > 0);
             int rivallife = data.rival.deckcount + Rival.Hand.Count - System.Convert.ToInt32(data.damage < 0);
@@ -268,9 +277,10 @@ public class GameClient : MonoBehaviour
             else
                 Message.text = "Draw";
             FrontCanvas.SetActive(true);
+            Phase = data.phase;
             InEffect = false;
 
-
+            Server.Terminalize();
             Server = null;
             yield break;
         }
@@ -282,7 +292,7 @@ public class GameClient : MonoBehaviour
 
         Myself.Used.Add(Myself.Battle);
         Rival.Used.Add(Rival.Battle);
-        if ((Phase & 1) == 0)
+        if ((data.phase & 1) == 0)
         {
             moves.Add(new MoveObject() { Object = Myself.Battle, Delta = (Myself.UsedPosition - Myself.Battle.transform.position) / 30 });
             moves.Add(new MoveObject() { Object = Rival.Battle, Delta = (Rival.UsedPosition - Rival.Battle.transform.position) / 30 });
@@ -312,7 +322,7 @@ public class GameClient : MonoBehaviour
         Rival.DeckCount.text = data.rival.deckcount.ToString();
 
 
-        if ((Phase & 1) == 0)
+        if ((data.phase & 1) == 0)
         {
             for (int i = 0; i < Myself.Hand.Count; i++)
             {
@@ -333,9 +343,10 @@ public class GameClient : MonoBehaviour
                 Rival.Used[Rival.Used.Count - 2].SetActive(false);
             }
         }
+        Phase = data.phase;
         InEffect = false;
 
-        if ((Phase & 1) == 1 && data.damage <= 0)
+        if ((data.phase & 1) == 1 && data.damage <= 0)
         {
             DecideCard(-1);
         }
@@ -345,8 +356,6 @@ public class GameClient : MonoBehaviour
 
     public IEnumerator DamageEffect(UpdateData data)
     {
-        Phase = data.phase;
-
         List<MoveObject> moves = new List<MoveObject>(7)
         {
             new MoveObject() { Object = Myself.Battle, Delta = (Myself.UsedPosition - Myself.Battle.transform.position) / 30 },
@@ -422,6 +431,7 @@ public class GameClient : MonoBehaviour
             RivalHandCheckers[i].SetPlusMinus(j);
         }
 
+        Phase = data.phase;
         InEffect = false;
         PhaseStartTime = Time.realtimeSinceStartup;
     }
@@ -472,11 +482,11 @@ public class GameClient : MonoBehaviour
         PhaseStartTime = -1;
         if ((Phase & 1) == 0)
         {
-            Server.SendSelect(index, (data) => StartCoroutine(BattleEffect(data)));
+            Server.SendSelect(Phase, index, (data) => StartCoroutine(BattleEffect(data)));
         }
         else
         {
-            Server.SendSelect(index, (data) => StartCoroutine(DamageEffect(data)));
+            Server.SendSelect(Phase, index, (data) => StartCoroutine(DamageEffect(data)));
         }
     }
 
