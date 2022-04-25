@@ -73,13 +73,19 @@ public class HandSelector : MonoBehaviour,IBeginDragHandler,IDragHandler,IEndDra
     void IBeginDragHandler.OnBeginDrag(PointerEventData eventData)
     {
         BeginPos = eventData.position;
-        DragCard = Card;
-        DragPhase = Client.InEffect ? -1 : Client.Phase;
+        DragCard = Client.InEffect ? null: Card;
+        DragPhase = Client.Phase;
     }
     void IDragHandler.OnDrag(PointerEventData eventData)
     {
-        if (Client.InEffect)
+        if (DragCard == null)
             return;
+        if (Client.InEffect)
+        {
+            DragCard.transform.GetChild(0).localPosition = Vector3.zero;
+            DragCard = null;
+            return;
+        }
 
         Vector3 pos = eventData.position;
         Vector3 target = pos - BeginPos;
@@ -91,14 +97,13 @@ public class HandSelector : MonoBehaviour,IBeginDragHandler,IDragHandler,IEndDra
     }
     void IEndDragHandler.OnEndDrag(PointerEventData eventData)
     {
+        if (DragCard == null)
+            return;
         Vector3 pos = eventData.position;
         Vector3 target = pos - BeginPos;
         DragCard.transform.GetChild(0).localPosition = Vector3.zero;
         if (target.y >= 50 && DragPhase == Client.Phase)
         {
-            Vector3 tmp = DragCard.transform.localPosition;
-            tmp.y += 50;
-            DragCard.transform.localPosition = tmp;
             Client.DecideCard(Index);
         }
     }

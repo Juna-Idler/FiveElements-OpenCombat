@@ -15,7 +15,7 @@ public class GameClient : MonoBehaviour
         Server = GameSceneParam.GameServer;
         if (Server == null)
         {
-            Server = new OfflineGameServer();
+            Server = new OfflineGameServer("Tester");
         }
 
         InitialData data = Server.GetInitialData();
@@ -78,6 +78,9 @@ public class GameClient : MonoBehaviour
     private PlayerObjects Myself;
     private PlayerObjects Rival;
 
+    public Text MyName;
+    public Text RivalName;
+
     //Inspectorで設定するのが楽なのでpublic
     public HandSelector[] MyHandSelectors;
     public HandChecker[] RivalHandCheckers;
@@ -93,9 +96,14 @@ public class GameClient : MonoBehaviour
     public GameObject FrontCanvas;
     public Text Message;
 
+    public GameObject OverrayCanvas;
+    public Text GuidMessage;
+    public const int GuidMessage_Y = -80;
+
     public AudioClip AudioAttack;
     public AudioClip AudioAttackOffset;
     public AudioClip AudioDamage;
+    public AudioClip AudioRecover;
 
     public AudioSource AudioSource;
 
@@ -191,8 +199,13 @@ public class GameClient : MonoBehaviour
         Rival.DeckCount = tmp.GetComponent<Text>();
         Rival.DeckCount.text = data.rivaldeckcount.ToString();
 
+        MyName.text = data.myname;
+        RivalName.text = data.rivalname;
+
         BattleTimeLimit = data.battleSelectTimeLimitSecond;
         DamageTimeLimit = data.damageSelectTimeLimitSecond;
+
+        DisplayGuidMessage("Select Battle Card", GuidMessage_Y);
     }
 
     private class MoveObject
@@ -279,6 +292,7 @@ public class GameClient : MonoBehaviour
             FrontCanvas.SetActive(true);
             Phase = data.phase;
             InEffect = false;
+            DisplayoffGuidMessage();
 
             Server.Terminalize();
             Server = null;
@@ -321,7 +335,7 @@ public class GameClient : MonoBehaviour
         Myself.DeckCount.text = data.myself.deckcount.ToString();
         Rival.DeckCount.text = data.rival.deckcount.ToString();
 
-
+        string guidmessage = "Select Damage Card";
         if ((data.phase & 1) == 0)
         {
             for (int i = 0; i < Myself.Hand.Count; i++)
@@ -342,6 +356,7 @@ public class GameClient : MonoBehaviour
             {
                 Rival.Used[Rival.Used.Count - 2].SetActive(false);
             }
+            guidmessage = "Select Battle Card";
         }
         Phase = data.phase;
         InEffect = false;
@@ -349,10 +364,13 @@ public class GameClient : MonoBehaviour
         if ((data.phase & 1) == 1 && data.damage <= 0)
         {
             DecideCard(-1);
+            guidmessage = "Wait Rival Damage Select";
         }
         else
             PhaseStartTime = Time.realtimeSinceStartup;
-    }
+
+        DisplayGuidMessage(guidmessage, GuidMessage_Y);
+   }
 
     public IEnumerator DamageEffect(UpdateData data)
     {
@@ -382,6 +400,7 @@ public class GameClient : MonoBehaviour
                 moves.Add(new MoveObject() { Object = Myself.Hand[i], Delta = (MyHandSelectors[i].transform.position - Myself.Hand[i].transform.position) / 30 });
                 MyHandSelectors[i].Card = Myself.Hand[i];
             }
+            AudioSource.PlayOneShot(AudioRecover);
         }
         else if (data.damage < 0)
         {
@@ -433,6 +452,7 @@ public class GameClient : MonoBehaviour
 
         Phase = data.phase;
         InEffect = false;
+        DisplayGuidMessage("Select Battle Card", GuidMessage_Y);
         PhaseStartTime = Time.realtimeSinceStartup;
     }
 
@@ -480,14 +500,34 @@ public class GameClient : MonoBehaviour
 
         InEffect = true;
         PhaseStartTime = -1;
+
+        if (index >= 0 && index < Myself.Hand.Count)
+        {
+            Vector3 tmp = Myself.Hand[index].transform.localPosition;
+            tmp.y += 50;
+            Myself.Hand[index].transform.localPosition = tmp;
+        }
+
         if ((Phase & 1) == 0)
         {
+            DisplayGuidMessage("Wait Rival Battle Select", GuidMessage_Y);
             Server.SendSelect(Phase, index, (data) => StartCoroutine(BattleEffect(data)));
         }
         else
         {
             Server.SendSelect(Phase, index, (data) => StartCoroutine(DamageEffect(data)));
         }
+    }
+
+    private void DisplayGuidMessage(string text,int y)
+    {
+//        OverrayCanvas.SetActive(true);
+        GuidMessage.text = text;
+        GuidMessage.transform.parent.transform.localPosition = new Vector3(0,y);
+    }
+    private void DisplayoffGuidMessage()
+    {
+        OverrayCanvas.SetActive(false);
     }
 
 }

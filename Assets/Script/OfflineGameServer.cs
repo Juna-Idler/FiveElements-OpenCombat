@@ -55,17 +55,20 @@ public class OfflineGameServer : IGameServer
     private PlayerData Player1;
     private PlayerData Player2;
 
+    private string PlayerName;
 
-    public OfflineGameServer()
+
+    public OfflineGameServer(string name)
     {
-        Initialize();
+        Initialize(name);
     }
-    public void Initialize()
+    public void Initialize(string name)
     {
         Phase = 0;
         BattleDamage = 0;
         Player1 = new PlayerData();
         Player2 = new PlayerData();
+        PlayerName = name;
     }
 
     private UpdateData ToUpdateData()
@@ -83,13 +86,13 @@ public class OfflineGameServer : IGameServer
     {
         return new InitialData()
         {
-            battleSelectTimeLimitSecond = 20,
+            battleSelectTimeLimitSecond = 15,
             damageSelectTimeLimitSecond = 10,
             myhand = Player1.hand.ToArray(),
             rivalhand = Player2.hand.ToArray(),
             mydeckcount = Player1.deck.Count,
             rivaldeckcount = Player2.deck.Count,
-            myname = "my name",
+            myname = PlayerName,
             rivalname = "CPU"
         };
     }
