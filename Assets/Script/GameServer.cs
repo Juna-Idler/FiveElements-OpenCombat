@@ -7,8 +7,13 @@ public interface IGameServer
 {
     public InitialData GetInitialData();
 
-    delegate void SendSelectCallback(UpdateData data);
-    public void SendSelect(int phase,int index,SendSelectCallback callback);
+    delegate void UpdateCallback(UpdateData data,AbortMessage abort);
+
+    public void SetUpdateCallback(UpdateCallback callback);
+
+    public void SendSelect(int phase,int index);
+
+    public void SendSurrender();
 
     void Terminalize();
 }

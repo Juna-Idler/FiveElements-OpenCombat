@@ -11,13 +11,13 @@ public class TitleSceneScript : MonoBehaviour
 
     public Text Name;
 
-    private OnlineGameServer Server = new OnlineGameServer();
+    private readonly OnlineGameServer Server = new OnlineGameServer();
 
     public async void OnlineButtonClick()
     {
         if (Connecting)
         {
-            Server.CancelConnect();
+            Server.Cancel();
             Connect.text = "VS Online";
             Connecting = false;
         }

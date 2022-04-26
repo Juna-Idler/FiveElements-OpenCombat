@@ -74,9 +74,18 @@ public class OnlineGameServer : IGameServer
     private ClientWebSocket Socket = null;
     private System.Threading.CancellationTokenSource Cancellation = null;
 
-
-    public async Task<bool> TryConnect(System.Uri serveruri,string playername)
+    public void Cancel()
     {
+        if (Cancellation != null)
+        {
+            Cancellation.Cancel();
+            Cancellation.Dispose();
+            Cancellation = null;
+        }
+    }
+        public async Task<bool> TryConnect(System.Uri serveruri,string playername)
+    {
+        Terminalize();
         Socket = new ClientWebSocket();
         Cancellation = new CancellationTokenSource();
         try
@@ -107,21 +116,48 @@ public class OnlineGameServer : IGameServer
                 };
                 Cancellation.Dispose();
                 Cancellation = null;
+
+                Cancellation = new CancellationTokenSource();
+                System.Threading.SynchronizationContext context = System.Threading.SynchronizationContext.Current;
+                _ = Task.Run(async () =>
+                  {
+                      string json;
+                      try
+                      {
+                          ArraySegment<byte> buffer = new ArraySegment<byte>(new byte[1024]);
+
+                          while (true)
+                          {
+                              WebSocketReceiveResult result = await Socket.ReceiveAsync(buffer, Cancellation.Token);
+                              json = System.Text.Encoding.UTF8.GetString(buffer.Array,0,result.Count);
+                              UpdateReceiveData data = JsonUtility.FromJson<UpdateReceiveData>(json);
+                              AbortMessage abort = null;
+                              if (data == null)
+                              {
+                                  abort = JsonUtility.FromJson<AbortMessage>(json);
+                              }
+                              context.Post(_ => Callback(data?.ToUpdateData(), abort), null);
+                          }
+                      }
+                      catch (Exception ex)
+                      {
+                          Console.WriteLine(ex.Message);
+                      }
+                      Cancellation.Dispose();
+                      Cancellation = null;
+                      context.Post(_ => Callback(null, new AbortMessage { reason = "socket close", game = 0 }), null);
+                  });
+
                 return true;
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Console.WriteLine(ex.Message);
         }
         Socket.Dispose();
         Socket = null;
         return false;
-    }
-    public void CancelConnect()
-    {
-        if (Cancellation != null)
-            Cancellation.Cancel();
-        Cancellation = null;
     }
 
 
@@ -131,43 +167,37 @@ public class OnlineGameServer : IGameServer
     {
         return (Socket != null) ? InitialData : null;
     }
+    private IGameServer.UpdateCallback Callback;
+    void IGameServer.SetUpdateCallback(IGameServer.UpdateCallback callback)
+    {
+        Callback = callback;
+    }
 
-    void IGameServer.SendSelect(int phase,int index, IGameServer.SendSelectCallback callback)
+    void IGameServer.SendSelect(int phase,int index)
     {
         if (Socket == null)
             return;
-        System.Threading.SynchronizationContext context = System.Threading.SynchronizationContext.Current;
-        Task.Run(async () =>
-        {
-            //            SendData send = new SendData { command = "Select", phase = Data.phase, index = index };
-            //            string select_command = JsonUtility.ToJson(send);
-            Cancellation = new CancellationTokenSource();
-            try
-            {
-                string select_command = $@"{{""command"":""Select"",""phase"":{phase},""index"":{index}}}";
-                ArraySegment<byte> buffer = new ArraySegment<byte>(System.Text.Encoding.UTF8.GetBytes(select_command));
-                await Socket.SendAsync(buffer, WebSocketMessageType.Text, true, Cancellation.Token);
+        string select_command = $@"{{""command"":""Select"",""phase"":{phase},""index"":{index}}}";
+        ArraySegment<byte> buffer = new ArraySegment<byte>(System.Text.Encoding.UTF8.GetBytes(select_command));
+        _ = Socket.SendAsync(buffer, WebSocketMessageType.Text, true,CancellationToken.None);
+    }
+    void IGameServer.SendSurrender()
+    {
+        if (Socket == null)
+            return;
+        string select_command = $@"{{""command"":""End"",""reason"":""Surrender"",""message"":"" ""}}";
+        ArraySegment<byte> buffer = new ArraySegment<byte>(System.Text.Encoding.UTF8.GetBytes(select_command));
+        _ = Socket.SendAsync(buffer, WebSocketMessageType.Text, true, CancellationToken.None);
 
-                buffer = new ArraySegment<byte>(new byte[1024]);
-                WebSocketReceiveResult result = await Socket.ReceiveAsync(buffer, Cancellation.Token);
-                string json = System.Text.Encoding.UTF8.GetString(buffer.Array);
-                UpdateReceiveData data = JsonUtility.FromJson<UpdateReceiveData>(json);
-
-                context.Post(_ => callback(data.ToUpdateData()), null);
-            }
-            catch(Exception)
-            {
-            }
-            Cancellation.Dispose();
-            Cancellation = null;
-        });
     }
 
-    void IGameServer.Terminalize()
+    void IGameServer.Terminalize() { Terminalize(); }
+    public void Terminalize()
     {
         if (Cancellation != null)
         {
             Cancellation.Cancel();
+            Cancellation.Dispose();
             Cancellation = null;
         }
         if (Socket != null)

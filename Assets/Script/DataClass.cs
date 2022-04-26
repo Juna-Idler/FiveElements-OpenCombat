@@ -31,6 +31,11 @@ public class InitialData
     public int rivaldeckcount;
 }
 
+public class AbortMessage
+{
+    public string reason;
+    public int game;
+}
 
 
 public class CardData

@@ -17,6 +17,7 @@ public class GameClient : MonoBehaviour
         {
             Server = new OfflineGameServer("Tester");
         }
+        Server.SetUpdateCallback(UpdateCallback);
 
         InitialData data = Server.GetInitialData();
 
@@ -511,13 +512,61 @@ public class GameClient : MonoBehaviour
         if ((Phase & 1) == 0)
         {
             DisplayGuidMessage("Wait Rival Battle Select", GuidMessage_Y);
-            Server.SendSelect(Phase, index, (data) => StartCoroutine(BattleEffect(data)));
+            Server.SendSelect(Phase, index);
         }
         else
         {
-            Server.SendSelect(Phase, index, (data) => StartCoroutine(DamageEffect(data)));
+            Server.SendSelect(Phase, index);
         }
     }
+
+    void UpdateCallback(UpdateData data, AbortMessage abort)
+    {
+        StartCoroutine(UpdateCoroutine(data,abort));
+    }
+    private Coroutine EffectCoroutin = null;
+    public IEnumerator UpdateCoroutine(UpdateData data, AbortMessage abort)
+    {
+        if (EffectCoroutin != null)
+        {
+            yield return EffectCoroutin;
+            EffectCoroutin = null;
+        }
+
+        if (Phase < 0)
+            yield break;
+        if (abort != null)
+        {
+            Phase = -1;
+            if (abort.game > 0)
+                Message.text = "Win\n";
+            else if (abort.game < 0)
+                Message.text = "Lose\n";
+            else
+                Message.text = "Draw\n";
+            Message.text += abort.reason;
+            FrontCanvas.SetActive(true);
+            InEffect = false;
+
+            Server.Terminalize();
+            Server = null;
+            yield break;
+        }
+        if (data == null)
+            yield break;
+        InEffect = true;
+        PhaseStartTime = -1;
+
+        if ((Phase & 1) == 0)
+        {
+            EffectCoroutin = StartCoroutine(BattleEffect(data));
+        }
+        else
+        {
+            EffectCoroutin = StartCoroutine(DamageEffect(data));
+        }
+    }
+
 
     private void DisplayGuidMessage(string text,int y)
     {

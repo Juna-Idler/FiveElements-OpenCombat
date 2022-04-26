@@ -97,7 +97,13 @@ public class OfflineGameServer : IGameServer
         };
     }
 
-    void IGameServer.SendSelect(int phase,int index,IGameServer.SendSelectCallback callback)
+    private IGameServer.UpdateCallback Callback;
+    void IGameServer.SetUpdateCallback(IGameServer.UpdateCallback callback)
+    {
+        Callback = callback;
+    }
+
+    void IGameServer.SendSelect(int phase,int index)
     {
         index = System.Math.Min(System.Math.Max(0, index), Player1.hand.Count - 1);
 
@@ -113,8 +119,13 @@ public class OfflineGameServer : IGameServer
             Battle(index, random.Next(0, Player2.hand.Count));
         }
 
-        callback(ToUpdateData());
+        Callback(ToUpdateData(),null);
     }
+     void IGameServer.SendSurrender()
+    {
+        Callback(null, new AbortMessage { reason = "Surrender", game = -1 });
+    }
+
     void IGameServer.Terminalize()
     {
     }
