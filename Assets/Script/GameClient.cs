@@ -470,10 +470,12 @@ public class GameClient : MonoBehaviour
     {
         if ((Phase & 1) == 0)
         {
+            CardData mysupport = (Myself.Used.Count > 0) ? Myself.Used.Last().GetComponent<Card>().CardData : null;
+            CardData rivalsupport = (Rival.Used.Count > 0) ? Rival.Used.Last().GetComponent<Card>().CardData : null;
             for (int i = 0; i < Rival.Hand.Count; i++)
             {
                 int j = CardData.Judge(Myself.Hand[index].GetComponent<Card>().CardData,Rival.Hand[i].GetComponent<Card>().CardData,
-                                        Myself.Used.LastOrDefault()?.GetComponent<Card>().CardData, Rival.Used.LastOrDefault()?.GetComponent<Card>().CardData);
+                                       mysupport, rivalsupport);
                 RivalHandCheckers[i].SetMaruBatu(j);
             }
         }
@@ -482,10 +484,12 @@ public class GameClient : MonoBehaviour
     {
         if ((Phase & 1) == 0)
         {
+            CardData mysupport = (Myself.Used.Count > 0) ? Myself.Used.Last().GetComponent<Card>().CardData : null;
+            CardData rivalsupport = (Rival.Used.Count > 0) ? Rival.Used.Last().GetComponent<Card>().CardData : null;
             for (int i = 0; i < Myself.Hand.Count; i++)
             {
                 int j = CardData.Judge(Rival.Hand[index].GetComponent<Card>().CardData, Myself.Hand[i].GetComponent<Card>().CardData,
-                                        Rival.Used.LastOrDefault()?.GetComponent<Card>().CardData, Myself.Used.LastOrDefault()?.GetComponent<Card>().CardData);
+                                       rivalsupport, mysupport);
                 MyHandSelectors[i].SetMaruBatu(j);
             }
         }
@@ -520,12 +524,12 @@ public class GameClient : MonoBehaviour
         }
     }
 
-    void UpdateCallback(UpdateData data, AbortMessage abort)
+    void UpdateCallback(UpdateData data, string abort)
     {
         StartCoroutine(UpdateCoroutine(data,abort));
     }
     private Coroutine EffectCoroutin = null;
-    public IEnumerator UpdateCoroutine(UpdateData data, AbortMessage abort)
+    public IEnumerator UpdateCoroutine(UpdateData data, string abort)
     {
         if (EffectCoroutin != null)
         {
@@ -538,18 +542,17 @@ public class GameClient : MonoBehaviour
         if (abort != null)
         {
             Phase = -1;
-            if (abort.game > 0)
-                Message.text = "Win\n";
-            else if (abort.game < 0)
-                Message.text = "Lose\n";
+            if (data.damage > 0)
+                Message.text = abort + " Lose";
+            else if (data.damage < 0)
+                Message.text = abort +" Win";
             else
-                Message.text = "Draw\n";
-            Message.text += abort.reason;
+                Message.text = abort + " Draw";
+
             FrontCanvas.SetActive(true);
             InEffect = false;
-
             Server.Terminalize();
-            Server = null;
+
             yield break;
         }
         if (data == null)
@@ -566,7 +569,10 @@ public class GameClient : MonoBehaviour
             EffectCoroutin = StartCoroutine(DamageEffect(data));
         }
     }
-
+    public void Surrender()
+    {
+        Server?.SendSurrender();
+    }
 
     private void DisplayGuidMessage(string text,int y)
     {

@@ -31,6 +31,11 @@ public class TitleSceneScript : MonoBehaviour
 
                 SceneManager.LoadScene("GameScene");
             }
+            else
+            {
+                Connect.text = "VS Online";
+                Connecting = false;
+            }
         }
     }
 

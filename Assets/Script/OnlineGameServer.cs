@@ -58,6 +58,8 @@ public class OnlineGameServer : IGameServer
         public PlayerData y;
         public PlayerData r;
 
+        public string a;
+
         public UpdateData ToUpdateData()
         {
             return new UpdateData() { phase = p, damage = d, myself = y.ToPlayerData(), rival = r.ToPlayerData() };
@@ -117,44 +119,40 @@ public class OnlineGameServer : IGameServer
                 Cancellation.Dispose();
                 Cancellation = null;
 
-                Cancellation = new CancellationTokenSource();
                 System.Threading.SynchronizationContext context = System.Threading.SynchronizationContext.Current;
                 _ = Task.Run(async () =>
-                  {
-                      string json;
-                      try
-                      {
-                          ArraySegment<byte> buffer = new ArraySegment<byte>(new byte[1024]);
+                {
+                    ArraySegment<byte> buffer = new ArraySegment<byte>(new byte[1024]);
+                    while (true)
+                    {
+                        WebSocketReceiveResult result = await Socket.ReceiveAsync(buffer, CancellationToken.None);
+                        if (result.MessageType == WebSocketMessageType.Close)
+                        {
+//閉じるって言ってるのにこれ要るのか？
+                            await Socket.CloseAsync((WebSocketCloseStatus)result.CloseStatus, result.CloseStatusDescription, CancellationToken.None);
+                            break;
+                        }
+//WebSocketのバッファ？が足りない場合はくっつけて読む必要があるのか
+//                        result.EndOfMessage
+                        string json = System.Text.Encoding.UTF8.GetString(buffer.Array, 0, result.Count);
+                        UpdateReceiveData data = JsonUtility.FromJson<UpdateReceiveData>(json);
 
-                          while (true)
-                          {
-                              WebSocketReceiveResult result = await Socket.ReceiveAsync(buffer, Cancellation.Token);
-                              json = System.Text.Encoding.UTF8.GetString(buffer.Array,0,result.Count);
-                              UpdateReceiveData data = JsonUtility.FromJson<UpdateReceiveData>(json);
-                              AbortMessage abort = null;
-                              if (data == null)
-                              {
-                                  abort = JsonUtility.FromJson<AbortMessage>(json);
-                              }
-                              context.Post(_ => Callback(data?.ToUpdateData(), abort), null);
-                          }
-                      }
-                      catch (Exception ex)
-                      {
-                          Console.WriteLine(ex.Message);
-                      }
-                      Cancellation.Dispose();
-                      Cancellation = null;
-                      context.Post(_ => Callback(null, new AbortMessage { reason = "socket close", game = 0 }), null);
-                  });
+                        context.Post(_ => Callback(data.ToUpdateData(), data.a), null);
+                    }
+                });
 
                 return true;
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Console.WriteLine(ex.Message);
         }
+        if (Cancellation != null)
+        {
+            Cancellation.Dispose();
+            Cancellation = null;
+        }
+
         Socket.Dispose();
         Socket = null;
         return false;
@@ -194,6 +192,7 @@ public class OnlineGameServer : IGameServer
     void IGameServer.Terminalize() { Terminalize(); }
     public void Terminalize()
     {
+        Callback = null;
         if (Cancellation != null)
         {
             Cancellation.Cancel();

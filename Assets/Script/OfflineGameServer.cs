@@ -123,7 +123,7 @@ public class OfflineGameServer : IGameServer
     }
      void IGameServer.SendSurrender()
     {
-        Callback(null, new AbortMessage { reason = "Surrender", game = -1 });
+        Callback(new UpdateData() { damage = 1, }, "Surrender");
     }
 
     void IGameServer.Terminalize()
