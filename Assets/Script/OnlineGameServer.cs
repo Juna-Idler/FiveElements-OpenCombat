@@ -144,8 +144,9 @@ public class OnlineGameServer : IGameServer
                 return true;
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Console.WriteLine(ex.Message);
         }
         if (Cancellation != null)
         {

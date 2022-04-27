@@ -11,6 +11,8 @@ public class TitleSceneScript : MonoBehaviour
 
     public Text Name;
 
+    public string ServerUrl;
+
     private readonly OnlineGameServer Server = new OnlineGameServer();
 
     public async void OnlineButtonClick()
@@ -25,7 +27,7 @@ public class TitleSceneScript : MonoBehaviour
         {
             Connecting = true;
             Connect.text = "Connecting";
-            if (await Server.TryConnect(new System.Uri("ws://localhost:8080/"),Name.text))
+            if (await Server.TryConnect(new System.Uri(ServerUrl),Name.text))
             {
                 GameSceneParam.GameServer = Server;
 

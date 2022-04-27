@@ -472,6 +472,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Connect: {fileID: 945114157}
   Name: {fileID: 1281225190}
+  ServerUrl: wss://five-elements-opencombat.herokuapp.com/
 --- !u!114 &565997486
 MonoBehaviour:
   m_ObjectHideFlags: 0
