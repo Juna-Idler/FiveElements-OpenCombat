@@ -42,3 +42,13 @@ CloseStatusだけあって「なんで？」とおもったら
 噓書くなや、三状態じゃねーかよ
 >Close	2：終了メッセージを受信したため受信が完了しました。
 
+
+WebSocketの変遷
+
+1. 自前処理がなんとかできた
+WebGLに対応したい
+2. https://github.com/jirihybek/unity-websocket-webgl にたどり着く
+文字で送信されてると無視されて読めないのを修正する。websocket-sharpが要求される（まあ別にいいっちゃ良いんだが）
+3. https://github.com/endel/NativeWebSocket なんてのもあった
+WebGL以外は適当なメインスレッドでDispatchMessageQueueを呼ばないとOnMessageを飛ばさないという一貫性のない実装
+とりあえずNativeWebSocketのReceiveAsyncループ内でsynchronizationContext.Postを使ってDispatchMessageQueueすることに

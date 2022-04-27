@@ -526,6 +526,7 @@ public class GameClient : MonoBehaviour
 
     void UpdateCallback(UpdateData data, string abort)
     {
+        Debug.Log("Update Callback");
         StartCoroutine(UpdateCoroutine(data,abort));
     }
     private Coroutine EffectCoroutin = null;
