@@ -83,15 +83,22 @@ public class OnlineGameServer3 : IGameServer
     {
         Terminalize();
         var tcs = new TaskCompletionSource<bool>();
-        CancelAction = () => { Debug.Log("Connect Cancel"); Terminalize(); tcs.SetResult(false); };
+        CancelAction = () =>
+        {
+            Debug.Log("Connect Cancel");
+            Terminalize();
+            tcs.SetResult(false);
+        };
         ws = new NativeWebSocket.WebSocket(serveruri.AbsoluteUri);
 
         ws.OnOpen += async () =>
         {
             Debug.Log("WS OnOpen:");
 
-            byte[] joincommand = System.Text.Encoding.UTF8.GetBytes($@"{{""command"":""Join"",""playername"":""{playername}""}}");
+            if (ws == null)
+                return;
 
+            byte[] joincommand = System.Text.Encoding.UTF8.GetBytes($@"{{""command"":""Join"",""playername"":""{playername}""}}");
             await ws.Send(joincommand);
             Debug.Log("WS OnOpen:Send FirstCommand");
         };

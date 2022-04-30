@@ -4,6 +4,8 @@ Unityの習作としてOpenCombatを組んでみた。
 五行説を元にした属性相性を取り入れたが、うーんどうだろう？
 
 
+Font:しっぽりアンチック
+SIL Open Font License Version 1.1
 
 ## 謎の設定
 
@@ -52,3 +54,5 @@ WebGLに対応したい
 3. https://github.com/endel/NativeWebSocket なんてのもあった
 WebGL以外は適当なメインスレッドでDispatchMessageQueueを呼ばないとOnMessageを飛ばさないという一貫性のない実装
 とりあえずNativeWebSocketのReceiveAsyncループ内でsynchronizationContext.Postを使ってDispatchMessageQueueすることに
+
+

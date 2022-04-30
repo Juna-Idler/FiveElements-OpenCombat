@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 public interface IGameServer
 {
     delegate void UpdateCallback(UpdateData data,string abort);
-    public void SetUpdateCallback(UpdateCallback callback);
+    void SetUpdateCallback(UpdateCallback callback);
 
-    public InitialData GetInitialData();
+    InitialData GetInitialData();
 
-    public void SendSelect(int phase,int index);
+    void SendSelect(int phase,int index);
 
-    public void SendSurrender();
+    void SendSurrender();
 
     void Terminalize();
 }

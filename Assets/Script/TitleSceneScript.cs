@@ -6,39 +6,64 @@ using UnityEngine.UI;
 
 public class TitleSceneScript : MonoBehaviour
 {
-    public Text Connect;
     private bool Connecting = false;
 
     public Text Name;
 
     public string ServerUrl;
 
+
+
+    public Button CPUButton;
+    public Button OnlineButton;
+
+    public InputField NameInput;
+
+
 //    private readonly OnlineGameServer Server = new OnlineGameServer();
 //    private readonly OnlineGameServer2 Server = new OnlineGameServer2();
-    private readonly OnlineGameServer3 Server = new OnlineGameServer3();
+//    private readonly OnlineGameServer3 Server = new OnlineGameServer3();
+    private readonly PunGameServer Server = new PunGameServer();
+
+    private void Start()
+    {
+        string name = PlayerPrefs.GetString("name", "");
+        NameInput.GetComponent<InputField>().text = name;
+    }
 
     public async void OnlineButtonClick()
     {
 //        ServerUrl = "ws://localhost:8080/";
+        Text label = OnlineButton.transform.GetChild(0).gameObject.GetComponent<Text>();
         if (Connecting)
         {
+            CPUButton.interactable = true;
+            NameInput.interactable = true;
             Server.Cancel();
-            Connect.text = "VS Online";
+            label.text = "VS Online";
             Connecting = false;
         }
         else
         {
+            CPUButton.interactable = false;
+            NameInput.interactable = false;
+
             Connecting = true;
-            Connect.text = "Connecting";
-            if (await Server.TryConnect(new System.Uri(ServerUrl), Name.text))
+            label.text = "Connecting...";
+
+            string name = NameInput.GetComponent<InputField>().text;
+            PlayerPrefs.SetString("name", name);
+
+//            if (await Server.TryConnect(new System.Uri(ServerUrl), name))
+            if (await Server.TryConnect(name))
             {
-                GameSceneParam.GameServer = Server;
+                    GameSceneParam.GameServer = Server;
 
                 SceneManager.LoadScene("GameScene");
             }
             else
             {
-                Connect.text = "VS Online";
+                label.text = "VS Online";
                 Connecting = false;
             }
         }
@@ -46,7 +71,10 @@ public class TitleSceneScript : MonoBehaviour
 
     public void CPUButtonClick()
     {
-        IGameServer server = new OfflineGameServer(Name.text);
+        string name = NameInput.GetComponent<InputField>().text;
+        PlayerPrefs.SetString("name", name);
+
+        IGameServer server = new OfflineGameServer(name);
 
         GameSceneParam.GameServer = server;
 
