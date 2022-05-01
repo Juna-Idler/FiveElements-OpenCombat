@@ -108,7 +108,10 @@ public class PunGameServer : IGameServer,
             tcs.SetResult(false);
             return tcs.Task;
         }
-        PhotonNetwork.LocalPlayer.NickName = name;
+        if (PhotonNetwork.IsConnected)
+        {
+            PhotonNetwork.LocalPlayer.NickName = name;
+        }
 
         return tcs.Task;
     }

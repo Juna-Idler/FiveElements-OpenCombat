@@ -5,6 +5,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Rendering;
 
+using DG.Tweening;
+
 public class GameClient : MonoBehaviour
 {
     private IGameServer Server;
@@ -107,6 +109,8 @@ public class GameClient : MonoBehaviour
     public AudioClip AudioRecover;
 
     public AudioSource AudioSource;
+
+    public GameObject WaitCircle;
 
 
     public bool InEffect { get; private set; } = false;
@@ -222,6 +226,7 @@ public class GameClient : MonoBehaviour
 
     public IEnumerator BattleEffect(UpdateData data)
     {
+        DisplayoffGuidMessage();
         Myself.Battle = Myself.Hand[data.myself.select];
         Rival.Battle = Rival.Hand[data.rival.select];
         Myself.Hand.RemoveAt(data.myself.select);
@@ -240,17 +245,13 @@ public class GameClient : MonoBehaviour
         SetSortingGroupOrder(Myself.Battle, 6);
         SetSortingGroupOrder(Rival.Battle, 6);
 
-        MoveObject mybattle = new MoveObject { Object = Myself.Battle, Delta = (Myself.BattlePosition - Myself.Battle.transform.position) / 30 };
-        MoveObject rivalbattle = new MoveObject { Object = Rival.Battle, Delta = (Rival.BattlePosition - Rival.Battle.transform.position) / 30 };
+        Myself.Battle.transform.DOMove(Myself.BattlePosition, 0.5f);
+        Rival.Battle.transform.DOMove(Rival.BattlePosition, 0.5f);
 
         if (data.damage < 0)
             AudioSource.PlayOneShot(AudioAttack);
-        for (int i = 0; i < 30; i++)
-        {
-            mybattle.Step();
-            rivalbattle.Step();
-            yield return null;
-        }
+        yield return new WaitForSeconds(0.5f);
+
         SetSortingGroupOrder(Myself.Battle, 1);
         SetSortingGroupOrder(Rival.Battle, 1);
 
@@ -309,28 +310,21 @@ public class GameClient : MonoBehaviour
         Rival.Used.Add(Rival.Battle);
         if ((data.phase & 1) == 0)
         {
-            moves.Add(new MoveObject() { Object = Myself.Battle, Delta = (Myself.UsedPosition - Myself.Battle.transform.position) / 30 });
-            moves.Add(new MoveObject() { Object = Rival.Battle, Delta = (Rival.UsedPosition - Rival.Battle.transform.position) / 30 });
+            Myself.Battle.transform.DOMove(Myself.UsedPosition, 0.5f);
+            Rival.Battle.transform.DOMove(Rival.UsedPosition, 0.5f);
         }
 
         for (int i = 0; i < Myself.Hand.Count; i++)
         {
-            Vector3 step = (MyHandSelectors[i].transform.position - Myself.Hand[i].transform.position) / 30;
-            moves.Add(new MoveObject { Object = Myself.Hand[i], Delta = step });
+            Myself.Hand[i].transform.DOMove(MyHandSelectors[i].transform.position, 0.5f);
             MyHandSelectors[i].Card = Myself.Hand[i];
         }
         for (int i = 0; i < Rival.Hand.Count; i++)
         {
-            Vector3 step = (RivalHandCheckers[i].transform.position - Rival.Hand[i].transform.position) / 30;
-            moves.Add(new MoveObject { Object = Rival.Hand[i], Delta = step });
+            Rival.Hand[i].transform.DOMove(RivalHandCheckers[i].transform.position, 0.5f);
         }
 
-        for (int i = 0; i < 30; i++)
-        {
-            foreach (MoveObject o in moves)
-                o.Step();
-            yield return null;
-        }
+        yield return new WaitForSeconds(0.5f);
 
 
         Myself.DeckCount.text = data.myself.deckcount.ToString();
@@ -375,11 +369,9 @@ public class GameClient : MonoBehaviour
 
     public IEnumerator DamageEffect(UpdateData data)
     {
-        List<MoveObject> moves = new List<MoveObject>(7)
-        {
-            new MoveObject() { Object = Myself.Battle, Delta = (Myself.UsedPosition - Myself.Battle.transform.position) / 30 },
-            new MoveObject() { Object = Rival.Battle, Delta = (Rival.UsedPosition - Rival.Battle.transform.position) / 30 }
-        };
+        DisplayoffGuidMessage();
+        Myself.Battle.transform.DOMove(Myself.UsedPosition, 0.5f);
+        Rival.Battle.transform.DOMove(Rival.UsedPosition, 0.5f);
 
         GameObject DeleteObject = null;
         if (data.damage > 0)
@@ -394,11 +386,11 @@ public class GameClient : MonoBehaviour
             Myself.Hand.RemoveAt(data.myself.select);
             Myself.Damage.Add(DeleteObject);
 
-            moves.Add(new MoveObject() { Object = DeleteObject, Delta = (Myself.DamagePosition - DeleteObject.transform.position) / 30 });
+            DeleteObject.transform.DOMove(Myself.DamagePosition, 0.5f);
             SetSortingGroupOrder(DeleteObject, 10);
             for (int i = 0; i < Myself.Hand.Count; i++)
-            { 
-                moves.Add(new MoveObject() { Object = Myself.Hand[i], Delta = (MyHandSelectors[i].transform.position - Myself.Hand[i].transform.position) / 30 });
+            {
+                Myself.Hand[i].transform.DOMove(MyHandSelectors[i].transform.position, 0.5f);
                 MyHandSelectors[i].Card = Myself.Hand[i];
             }
             AudioSource.PlayOneShot(AudioRecover);
@@ -415,18 +407,13 @@ public class GameClient : MonoBehaviour
             Rival.Hand.RemoveAt(data.rival.select);
             Rival.Damage.Add(DeleteObject);
 
-            moves.Add(new MoveObject() { Object = DeleteObject, Delta = (Rival.DamagePosition - DeleteObject.transform.position) / 30 });
+            DeleteObject.transform.DOMove(Rival.DamagePosition, 0.5f);
             SetSortingGroupOrder(DeleteObject, 10);
             for (int i = 0; i < Rival.Hand.Count; i++)
-                moves.Add(new MoveObject() { Object = Rival.Hand[i], Delta = (RivalHandCheckers[i].transform.position - Rival.Hand[i].transform.position) / 30 });
+                Rival.Hand[i].transform.DOMove(RivalHandCheckers[i].transform.position, 0.5f);
         }
 
-        for (int i = 0; i < 30; i++)
-        {
-            foreach (MoveObject o in moves)
-                o.Step();
-            yield return null;
-        }
+        yield return new WaitForSeconds(0.5f);
 
         if (Myself.Used.Count > 1)
         {
@@ -516,6 +503,7 @@ public class GameClient : MonoBehaviour
         if ((Phase & 1) == 0)
         {
             DisplayGuidMessage("Wait Rival Battle Select", GuidMessage_Y);
+            WaitCircle.SetActive(true);
             Server.SendSelect(Phase, index);
         }
         else
@@ -532,6 +520,8 @@ public class GameClient : MonoBehaviour
     private Coroutine EffectCoroutin = null;
     public IEnumerator UpdateCoroutine(UpdateData data, string abort)
     {
+        WaitCircle.SetActive(false);
+
         if (EffectCoroutin != null)
         {
             yield return EffectCoroutin;
@@ -577,7 +567,7 @@ public class GameClient : MonoBehaviour
 
     private void DisplayGuidMessage(string text,int y)
     {
-//        OverrayCanvas.SetActive(true);
+        OverrayCanvas.SetActive(true);
         GuidMessage.text = text;
         GuidMessage.transform.parent.transform.localPosition = new Vector3(0,y);
     }
