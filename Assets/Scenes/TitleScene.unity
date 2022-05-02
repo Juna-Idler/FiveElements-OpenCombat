@@ -474,6 +474,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Name: {fileID: 1281225190}
   ServerUrl: wss://five-elements-opencombat.herokuapp.com/
+  LocalMode: 1
   CPUButton: {fileID: 706804690}
   OnlineButton: {fileID: 866314224}
   PUNButton: {fileID: 1801067913}

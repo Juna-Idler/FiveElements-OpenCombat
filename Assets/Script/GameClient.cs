@@ -127,10 +127,10 @@ public class GameClient : MonoBehaviour
     private GameObject[] CardArray;
     private int CardArrayIndex;
 
-    private GameObject CreateCard(CardData card)
+    private GameObject CreateCard(int id)
     {
         GameObject c = CardArray[CardArrayIndex++];
-        c.GetComponent<Card>().Initialize(card);
+        c.GetComponent<Card>().Initialize(id);
         c.SetActive(true);
         return c;
     }
@@ -262,7 +262,7 @@ public class GameClient : MonoBehaviour
 
         if (Myself.Used.Count > 0)
         {
-            CardData mySupportData = Myself.Used[Myself.Used.Count - 1].GetComponent<Card>().CardData;
+            CardData mySupportData = Myself.Used[^1].GetComponent<Card>().CardData;
             int c = CardData.Chemistry(myBattleData.Element, mySupportData.Element);
             if (c > 0)
             {
@@ -295,7 +295,7 @@ public class GameClient : MonoBehaviour
                 mysequence.AppendInterval(0.5f);
             }
 
-            CardData rivalSupportData = Rival.Used[Rival.Used.Count - 1].GetComponent<Card>().CardData;
+            CardData rivalSupportData = Rival.Used[^1].GetComponent<Card>().CardData;
             c = CardData.Chemistry(rivalBattleData.Element, rivalSupportData.Element);
             if (c > 0)
             {
@@ -459,9 +459,9 @@ public class GameClient : MonoBehaviour
 
 
         if (Myself.Used.Count > 0)
-            SetSortingGroupOrder(Myself.Used[Myself.Used.Count - 1], 0);
+            SetSortingGroupOrder(Myself.Used[^1], 0);
         if (Rival.Used.Count > 0)
-            SetSortingGroupOrder(Rival.Used[Rival.Used.Count - 1], 0);
+            SetSortingGroupOrder(Rival.Used[^1], 0);
 
         Myself.Used.Add(Myself.Battle);
         Rival.Used.Add(Rival.Battle);
@@ -502,11 +502,11 @@ public class GameClient : MonoBehaviour
             }
             if (Myself.Used.Count > 1)
             {
-                Myself.Used[Myself.Used.Count - 2].SetActive(false);
+                Myself.Used[^2].SetActive(false);
             }
             if (Rival.Used.Count > 1)
             {
-                Rival.Used[Rival.Used.Count - 2].SetActive(false);
+                Rival.Used[^2].SetActive(false);
             }
         }
         Phase = data.phase;
@@ -570,12 +570,12 @@ public class GameClient : MonoBehaviour
 
         if (Myself.Used.Count > 1)
         {
-            Myself.Used[Myself.Used.Count - 2].SetActive(false);
+            Myself.Used[^2].SetActive(false);
         }
 
         if (Rival.Used.Count > 1)
         {
-            Rival.Used[Rival.Used.Count - 2].SetActive(false);
+            Rival.Used[^2].SetActive(false);
         }
 
         DeleteObject.SetActive(false);

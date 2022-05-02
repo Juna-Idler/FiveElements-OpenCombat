@@ -18,15 +18,6 @@ public class PunGameServer : IGameServer,
     IOnEventCallback
 {
 
-    [System.Serializable]
-    private class CardData
-    {
-        public byte e;
-        public byte p;
-
-        public global::CardData ToCardData() { return new global::CardData((global::CardData.FiveElements)e, p); }
-        public static CardData FromCardData(global::CardData c) { return new CardData() { e = (byte)c.Element, p = (byte)c.Power }; }
-    }
 
     [System.Serializable]
     private class InitialReceiveData
@@ -34,7 +25,7 @@ public class PunGameServer : IGameServer,
         [System.Serializable]
         public class PlayerData
         {
-            public CardData[] hand;
+            public int[] hand;
             public int deckcount;
         }
         public PlayerData y;
@@ -53,13 +44,13 @@ public class PunGameServer : IGameServer,
         [System.Serializable]
         public class PlayerData
         {
-            public CardData[] d;
+            public int[] d;
             public int s;
             public int c;
 
             public UpdateData.PlayerData ToPlayerData()
             {
-                return new UpdateData.PlayerData { draw = d.Select(c => c.ToCardData()).ToArray(), select = s, deckcount = c };
+                return new UpdateData.PlayerData { draw = d, select = s, deckcount = c };
             }
         }
         public PlayerData y;
@@ -95,7 +86,6 @@ public class PunGameServer : IGameServer,
         Debug.Log("Connect Cancel");
         tcs.SetResult(false);
     }
-    private System.Action CancelAction;
 
     public Task<bool> TryConnect(string name)
     {
@@ -192,12 +182,12 @@ public class PunGameServer : IGameServer,
 
                     InitialReceiveData.PlayerData p1 = new InitialReceiveData.PlayerData
                     {
-                        hand = GameProcessor.Player1.draw.Select(c => CardData.FromCardData(c)).ToArray(),
+                        hand = GameProcessor.Player1.draw.ToArray(),
                         deckcount = GameProcessor.Player1.deck.Count
                     };
                     InitialReceiveData.PlayerData p2 = new InitialReceiveData.PlayerData
                     {
-                        hand = GameProcessor.Player2.draw.Select(c => CardData.FromCardData(c)).ToArray(),
+                        hand = GameProcessor.Player2.draw.ToArray(),
                         deckcount = GameProcessor.Player2.deck.Count
                     };
 
@@ -270,13 +260,13 @@ public class PunGameServer : IGameServer,
                         UpdateReceiveData.PlayerData p1 = new UpdateReceiveData.PlayerData
                         {
                             s = Select1,
-                            d = GameProcessor.Player1.draw.Select(c => CardData.FromCardData(c)).ToArray(),
+                            d = GameProcessor.Player1.draw.ToArray(),
                             c = GameProcessor.Player1.deck.Count
                         };
                         UpdateReceiveData.PlayerData p2 = new UpdateReceiveData.PlayerData
                         {
                             s = Select2,
-                            d = GameProcessor.Player2.draw.Select(c => CardData.FromCardData(c)).ToArray(),
+                            d = GameProcessor.Player2.draw.ToArray(),
                             c = GameProcessor.Player2.deck.Count
                         };
 
@@ -340,8 +330,8 @@ public class PunGameServer : IGameServer,
             damageSelectTimeLimitSecond = initialReceiveData.damagetime,
             myname = myself.NickName,
             rivalname = rival.NickName,
-            myhand = initialReceiveData.y.hand.Select(c=>c.ToCardData()).ToArray(),
-            rivalhand = initialReceiveData.r.hand.Select(c => c.ToCardData()).ToArray(),
+            myhand = initialReceiveData.y.hand,
+            rivalhand = initialReceiveData.r.hand,
             mydeckcount = initialReceiveData.y.deckcount,
             rivaldeckcount = initialReceiveData.r.deckcount,
         };

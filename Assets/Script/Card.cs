@@ -29,9 +29,9 @@ public class Card : MonoBehaviour
         new Color(0.1f, 0.1f, 0.3f)
     };
 
-    public void Initialize(CardData data)
+    public void Initialize(int id)
     {
-        CardData = data;
+        CardData = CardCatalog.Get(id);
 
         GameObject face = transform.GetChild(0).gameObject;
         SpriteRenderer renderer = face.GetComponent<SpriteRenderer>();

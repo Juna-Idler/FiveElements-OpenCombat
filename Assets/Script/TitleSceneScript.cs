@@ -13,6 +13,7 @@ public class TitleSceneScript : MonoBehaviour
 
     public string ServerUrl;
 
+    public bool LocalMode = false;
 
 
     public Button CPUButton;
@@ -31,11 +32,13 @@ public class TitleSceneScript : MonoBehaviour
     {
         string name = PlayerPrefs.GetString("name", "");
         NameInput.GetComponent<InputField>().text = name;
+
+        if (LocalMode)
+            ServerUrl = "ws://localhost:8080/";
     }
 
     public async void OnlineButtonClick()
     {
-//        ServerUrl = "ws://localhost:8080/";
         Text label = OnlineButton.transform.GetChild(0).gameObject.GetComponent<Text>();
         if (Connecting)
         {
@@ -58,7 +61,12 @@ public class TitleSceneScript : MonoBehaviour
             string name = NameInput.GetComponent<InputField>().text;
             PlayerPrefs.SetString("name", name);
 
-            if (await Server.TryConnect(new System.Uri(ServerUrl), name))
+
+            string server = ServerUrl;
+            if (LocalMode)
+                server = "ws://localhost:8080/";
+
+            if (await Server.TryConnect(new System.Uri(server), name))
             {
                     GameSceneParam.GameServer = Server;
 

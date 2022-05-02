@@ -11,14 +11,6 @@ using System.Threading.Tasks;
 
 public class OnlineGameServer : IGameServer
 {
-    [Serializable]
-    private  class CardData
-    {
-        public int e;
-        public int p;
-
-        public global::CardData ToCardData() { return new global::CardData((global::CardData.FiveElements)e, p); }
-    }
 
     [Serializable]
     private class InitialReceiveData
@@ -27,7 +19,7 @@ public class OnlineGameServer : IGameServer
         public class PlayerData
         {
             public string name;
-            public CardData[] hand;
+            public int[] hand;
             public int deckcount;
         }
         public PlayerData y;
@@ -46,13 +38,13 @@ public class OnlineGameServer : IGameServer
         [Serializable]
         public class PlayerData
         {
-            public CardData[] d;
+            public int[] d;
             public int s;
             public int c;
 
             public UpdateData.PlayerData ToPlayerData()
             {
-                return new UpdateData.PlayerData { draw = d.Select(c => c.ToCardData()).ToArray(), select = s, deckcount = c };
+                return new UpdateData.PlayerData { draw = d, select = s, deckcount = c };
             }
         }
         public PlayerData y;
@@ -109,8 +101,8 @@ public class OnlineGameServer : IGameServer
                 {
                     battleSelectTimeLimitSecond = data.battletime,
                     damageSelectTimeLimitSecond = data.damagetime,
-                    myhand = data.y.hand.Select(c => c.ToCardData()).ToArray(),
-                    rivalhand = data.r.hand.Select(c => c.ToCardData()).ToArray(),
+                    myhand = data.y.hand,
+                    rivalhand = data.r.hand,
                     mydeckcount = data.y.deckcount,
                     rivaldeckcount = data.r.deckcount,
                     myname = data.y.name,

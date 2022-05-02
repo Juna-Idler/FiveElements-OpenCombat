@@ -65,9 +65,10 @@ public class OfflineGameServer : IGameServer
             int min = 256;
             for (int i = 0; i < GameProcessor.Player2.hand.Count; i++)
             {
-                if (GameProcessor.Player2.hand[i].Power < min)
+                int p = CardCatalog.Get(GameProcessor.Player2.hand[i]).Power;
+                if (p < min)
                 {
-                    min = GameProcessor.Player2.hand[i].Power;
+                    min = p;
                     index2 = i;
                 }
             }

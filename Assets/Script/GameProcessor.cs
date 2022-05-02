@@ -3,31 +3,27 @@ using System.Collections.Generic;
 using System.Linq;
 public class GameProcessor
 {
-    public static readonly System.Random random = new System.Random();
+    public static readonly System.Random random = new();
 
     public class PlayerData
     {
-        public List<CardData> hand = new List<CardData>(5);
-        public LinkedList<CardData> deck;
-        public List<CardData> used = new List<CardData>(20);
-        public List<CardData> damage = new List<CardData>(10);
+        public List<int> hand = new(5);
+        public LinkedList<int> deck;
+        public List<int> used = new(20);
+        public List<int> damage = new(10);
 
         public int select = -1;
-        public List<CardData> draw = new List<CardData>(2);
+        public List<int> draw = new(2);
 
         public PlayerData()
         {
-            CardData[] array = new CardData[20];
-            int index = 0;
-            foreach (CardData.FiveElements e in System.Enum.GetValues(typeof(CardData.FiveElements)))
+            int[] array = new int[20];
+            for (int i = 0; i < 10; i++)
             {
-                for (int i = 1; i < 3; i++)
-                {
-                    array[index++] = new CardData(e, i);
-                    array[index++] = new CardData(e, i);
-                }
+                array[i] = i + 1;
+                array[10 + i] = i + 1;
             }
-            deck = new LinkedList<CardData>(array.OrderBy(x => random.Next()));
+            deck = new LinkedList<int>(array.OrderBy(x => random.Next()));
             DrawCard(4);
         }
         public void DrawCard(int count)
@@ -99,8 +95,9 @@ public class GameProcessor
 
     private void Battle(int index1, int index2)
     {
-        CardData battle1 = Player1.hand[index1];
-        CardData battle2 = Player2.hand[index2];
+        CardCatalog catalog = CardCatalog.Instance;
+        CardData battle1 = catalog[Player1.hand[index1]];
+        CardData battle2 = catalog[Player2.hand[index2]];
 
         Player1.select = index1;
         Player2.select = index2;
@@ -108,8 +105,8 @@ public class GameProcessor
         Player1.hand.RemoveAt(index1);
         Player2.hand.RemoveAt(index2);
 
-        CardData support1 = Player1.used.LastOrDefault();
-        CardData support2 = Player2.used.LastOrDefault();
+        CardData support1 = Player1.used.Count == 0 ? null : catalog[Player1.used[^1]];
+        CardData support2 = Player2.used.Count == 0 ? null : catalog[Player2.used[^1]];
 
         int battleresult = CardData.Judge(battle1, battle2, support1, support2);
 
@@ -124,8 +121,8 @@ public class GameProcessor
             return;
         }
 
-        Player1.used.Add(battle1);
-        Player2.used.Add(battle2);
+        Player1.used.Add(battle1.ID);
+        Player2.used.Add(battle2.ID);
 
 
 

@@ -9,7 +9,7 @@ public class UpdateData
 
     public class PlayerData
     {
-        public CardData[] draw;
+        public int[] draw;
         public int select;
         public int deckcount;
     }
@@ -25,8 +25,8 @@ public class InitialData
     public string myname;
     public string rivalname;
 
-    public CardData[] myhand;
-    public CardData[] rivalhand;
+    public int[] myhand;
+    public int[] rivalhand;
     public int mydeckcount;
     public int rivaldeckcount;
 }
@@ -49,11 +49,13 @@ public class CardData
         水
     }
 
+    public int ID;
     public FiveElements Element;
     public int Power;
 
-    public CardData(FiveElements elementt,int power)
+    public CardData(int id,FiveElements elementt,int power)
     {
+        ID = id;
         Element = elementt;
         Power = power;
     }

@@ -10,24 +10,12 @@ public class CardCatalog
         public struct Card
         {
             public int ID;
-            public string Element;
+            public int Element;
             public int Power;
         }
         public Card[] CardCatalog;
     }
 
-    public static CardData.FiveElements ConvertElement(string element)
-    {
-        return element switch
-        {
-            "木" => CardData.FiveElements.木,
-            "火" => CardData.FiveElements.火,
-            "土" => CardData.FiveElements.土,
-            "金" => CardData.FiveElements.金,
-            "水" => CardData.FiveElements.水,
-            _ => throw new System.Exception("Don't convert Element:" + element),
-        };
-    }
     static CardCatalog()
     {
         TextAsset text = Resources.Load<TextAsset>("cardcatalog");
@@ -40,7 +28,7 @@ public class CardCatalog
         Instance.Catalog = new CardData[catalog.CardCatalog.Length];
         for (int i = 0; i < catalog.CardCatalog.Length; i++)
         {
-            Instance.Catalog[i] = new CardData(ConvertElement(catalog.CardCatalog[i].Element), catalog.CardCatalog[i].Power);
+            Instance.Catalog[i] = new CardData(catalog.CardCatalog[i].ID, (CardData.FiveElements)catalog.CardCatalog[i].Element, catalog.CardCatalog[i].Power);
         }
     }
 
@@ -49,9 +37,9 @@ public class CardCatalog
 
     private CardData[] Catalog;
 
-    public CardData this[int id] { get { return Instance.Catalog[id-1]; } private set { } }
+    public CardData this[int id] { get { return Instance.Catalog[id]; } private set { } }
 
-    public static CardData Get(int id) { return Instance.Catalog[id-1]; }
+    public static CardData Get(int id) { return Instance.Catalog[id]; }
 
 
 }

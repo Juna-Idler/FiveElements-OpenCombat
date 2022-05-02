@@ -8,15 +8,6 @@ using System.Threading.Tasks;
 
 public class OnlineGameServer3 : IGameServer
 {
-    // Start is called before the first frame update
-    [Serializable]
-    private class CardData
-    {
-        public int e;
-        public int p;
-
-        public global::CardData ToCardData() { return new global::CardData((global::CardData.FiveElements)e, p); }
-    }
 
     [Serializable]
     private class InitialReceiveData
@@ -25,7 +16,7 @@ public class OnlineGameServer3 : IGameServer
         public class PlayerData
         {
             public string name;
-            public CardData[] hand;
+            public int[] hand;
             public int deckcount;
         }
         public PlayerData y;
@@ -44,13 +35,13 @@ public class OnlineGameServer3 : IGameServer
         [Serializable]
         public class PlayerData
         {
-            public CardData[] d;
+            public int[] d;
             public int s;
             public int c;
 
             public UpdateData.PlayerData ToPlayerData()
             {
-                return new UpdateData.PlayerData { draw = d.Select(c => c.ToCardData()).ToArray(), select = s, deckcount = c };
+                return new UpdateData.PlayerData { draw = d, select = s, deckcount = c };
             }
         }
         public PlayerData y;
@@ -116,8 +107,8 @@ public class OnlineGameServer3 : IGameServer
                 {
                     battleSelectTimeLimitSecond = idata.battletime,
                     damageSelectTimeLimitSecond = idata.damagetime,
-                    myhand = idata.y.hand.Select(c => c.ToCardData()).ToArray(),
-                    rivalhand = idata.r.hand.Select(c => c.ToCardData()).ToArray(),
+                    myhand = idata.y.hand,
+                    rivalhand = idata.r.hand,
                     mydeckcount = idata.y.deckcount,
                     rivaldeckcount = idata.r.deckcount,
                     myname = idata.y.name,
