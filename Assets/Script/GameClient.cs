@@ -99,9 +99,6 @@ public class GameClient : MonoBehaviour
     public GameObject FrontCanvas;
     public Text Message;
 
-    public GameObject OverrayCanvas;
-    public Text GuidMessage;
-    public const int GuidMessage_Y = -80;
 
     public AudioClip AudioAttack;
     public AudioClip AudioAttackOffset;
@@ -112,6 +109,14 @@ public class GameClient : MonoBehaviour
 
     public GameObject WaitCircle;
 
+    public GameObject MySupportArrow;
+    public GameObject RivalSupportArrow;
+
+    public GameObject MyBattleArrow;
+    public GameObject RivalBattleArrow;
+
+    public GameObject MyResultPower;
+    public GameObject RivalResultPower;
 
     public bool InEffect { get; private set; } = false;
 
@@ -210,52 +215,185 @@ public class GameClient : MonoBehaviour
         BattleTimeLimit = data.battleSelectTimeLimitSecond;
         DamageTimeLimit = data.damageSelectTimeLimitSecond;
 
-        DisplayGuidMessage("Select Battle Card", GuidMessage_Y);
-    }
-
-    private class MoveObject
-    {
-        public GameObject Object;
-        public Vector3 Delta;
-
-        public void Step()
-        {
-            Object.transform.position += Delta;
-        }
     }
 
     public IEnumerator BattleEffect(UpdateData data)
     {
-        DisplayoffGuidMessage();
-        Myself.Battle = Myself.Hand[data.myself.select];
-        Rival.Battle = Rival.Hand[data.rival.select];
-        Myself.Hand.RemoveAt(data.myself.select);
-        Rival.Hand.RemoveAt(data.rival.select);
-
-
         for (int i = 0; i < 5; i++)
         {
             MyHandSelectors[i].ResetAllOption();
             RivalHandCheckers[i].ResetAllOption();
-            MyHandSelectors[i].gameObject.SetActive(i < Myself.Hand.Count + data.myself.draw.Length);
-            RivalHandCheckers[i].gameObject.SetActive(i < Rival.Hand.Count + data.rival.draw.Length);
+            MyHandSelectors[i].gameObject.SetActive(i < Myself.Hand.Count - 1 + data.myself.draw.Length);
+            RivalHandCheckers[i].gameObject.SetActive(i < Rival.Hand.Count - 1 + data.rival.draw.Length);
         }
         Canvas.ForceUpdateCanvases();
+
+        Myself.Battle = Myself.Hand[data.myself.select];
+        Rival.Battle = Rival.Hand[data.rival.select];
 
         SetSortingGroupOrder(Myself.Battle, 6);
         SetSortingGroupOrder(Rival.Battle, 6);
 
+
+        //手札から戦場に移動
         Myself.Battle.transform.DOMove(Myself.BattlePosition, 0.5f);
         Rival.Battle.transform.DOMove(Rival.BattlePosition, 0.5f);
-
-        if (data.damage < 0)
-            AudioSource.PlayOneShot(AudioAttack);
         yield return new WaitForSeconds(0.5f);
+
+
+
+        CardData myBattleData = Myself.Battle.GetComponent<Card>().CardData;
+        MyResultPower.GetComponent<SpriteRenderer>().sprite = Card.NumberSprite(myBattleData.Power);
+        MyResultPower.transform.localScale = new Vector3(0.8f, 0.8f);
+        MyResultPower.SetActive(true);
+        CardData rivalBattleData = Rival.Battle.GetComponent<Card>().CardData;
+        RivalResultPower.GetComponent<SpriteRenderer>().sprite = Card.NumberSprite(rivalBattleData.Power);
+        RivalResultPower.transform.localScale = new Vector3(0.8f, 0.8f);
+        RivalResultPower.SetActive(true);
+
+        int mypower = myBattleData.Power;
+        int rivalpower = rivalBattleData.Power;
+
+        Sequence mysequence = DOTween.Sequence();
+        Sequence rivalsequence = DOTween.Sequence();
+
+        if (Myself.Used.Count > 0)
+        {
+            CardData mySupportData = Myself.Used[Myself.Used.Count - 1].GetComponent<Card>().CardData;
+            int c = CardData.Chemistry(myBattleData.Element, mySupportData.Element);
+            if (c > 0)
+            {
+                MySupportArrow.GetComponent<SpriteRenderer>().color = Color.red;
+                mysequence.AppendCallback(() => { 
+                    mypower++;
+                    MyResultPower.GetComponent<SpriteRenderer>().sprite = Card.NumberSprite(mypower); 
+                    MySupportArrow.SetActive(true);
+                });
+                mysequence.Append(MySupportArrow.transform.DOScale(0.6f, 0.1f).SetEase(Ease.Linear));
+                mysequence.Join(MyResultPower.transform.DOScale(0.1f, 0.1f).SetRelative());
+                mysequence.Append(MySupportArrow.transform.DOScale(0.4f, 0.4f));
+                mysequence.AppendCallback(() => { MySupportArrow.SetActive(false); });
+            }
+            else if (c < 0)
+            {
+                MySupportArrow.GetComponent<SpriteRenderer>().color = Color.blue;
+                mysequence.AppendCallback(() => {
+                    mypower--;
+                    MyResultPower.GetComponent<SpriteRenderer>().sprite = Card.NumberSprite(mypower < 0 ? 0 : mypower);
+                    MySupportArrow.SetActive(true);
+                });
+                mysequence.Append(MySupportArrow.transform.DOScale(0.3f, 0.1f).SetEase(Ease.Linear));
+                mysequence.Join(MyResultPower.transform.DOScale(-0.1f, 0.1f).SetRelative());
+                mysequence.Append(MySupportArrow.transform.DOScale(0.4f, 0.4f));
+                mysequence.AppendCallback(() => { MySupportArrow.SetActive(false); });
+            }
+            else
+            {
+                mysequence.AppendInterval(0.5f);
+            }
+
+            CardData rivalSupportData = Rival.Used[Rival.Used.Count - 1].GetComponent<Card>().CardData;
+            c = CardData.Chemistry(rivalBattleData.Element, rivalSupportData.Element);
+            if (c > 0)
+            {
+                RivalSupportArrow.GetComponent<SpriteRenderer>().color = Color.red;
+                rivalsequence.AppendCallback(() => {
+                     rivalpower++;
+                   RivalResultPower.GetComponent<SpriteRenderer>().sprite = Card.NumberSprite(rivalpower);
+                    RivalSupportArrow.SetActive(true);
+                });
+                rivalsequence.Append(RivalSupportArrow.transform.DOScale(0.6f, 0.1f).SetEase(Ease.Linear));
+                rivalsequence.Join(RivalResultPower.transform.DOScale(0.1f, 0.1f).SetRelative());
+                rivalsequence.Append(RivalSupportArrow.transform.DOScale(0.4f, 0.4f));
+                rivalsequence.AppendCallback(() => { RivalSupportArrow.SetActive(false); });
+            }
+            else if (c < 0)
+            {
+                RivalSupportArrow.GetComponent<SpriteRenderer>().color = Color.blue;
+                rivalsequence.AppendCallback(() =>
+                {
+                    rivalpower--;
+                    RivalResultPower.GetComponent<SpriteRenderer>().sprite = Card.NumberSprite(rivalpower < 0 ? 0 : rivalpower);
+                    RivalSupportArrow.SetActive(true);
+                });
+                rivalsequence.Append(RivalSupportArrow.transform.DOScale(0.3f, 0.1f).SetEase(Ease.Linear));
+                rivalsequence.Join(RivalResultPower.transform.DOScale(-0.1f, 0.1f).SetRelative());
+                rivalsequence.Append(RivalSupportArrow.transform.DOScale(0.4f, 0.4f));
+                rivalsequence.AppendCallback(() => { RivalSupportArrow.SetActive(false); });
+            }
+            else
+            {
+                rivalsequence.AppendInterval(0.5f);
+            }
+        }
+        {
+            int c1 = CardData.Chemistry(myBattleData.Element, rivalBattleData.Element);
+            int c2 = CardData.Chemistry(rivalBattleData.Element, myBattleData.Element);
+            if (c1 > 0)
+            {
+                MyBattleArrow.GetComponent<SpriteRenderer>().color = Color.red;
+                mysequence.AppendCallback(() => {
+                    mypower++;
+                    MyResultPower.GetComponent<SpriteRenderer>().sprite = Card.NumberSprite(mypower);
+                    MyBattleArrow.SetActive(true);
+                });
+                mysequence.Append(MyBattleArrow.transform.DOScale(0.6f, 0.1f).SetEase(Ease.Linear));
+                mysequence.Join(MyResultPower.transform.DOScale(0.1f, 0.1f).SetRelative());
+                mysequence.Append(MyBattleArrow.transform.DOScale(0.4f, 0.4f));
+                mysequence.AppendCallback(() => { MyBattleArrow.SetActive(false); });
+            }
+            else if (c1 < 0)
+            {
+                MyBattleArrow.GetComponent<SpriteRenderer>().color = Color.blue;
+                mysequence.AppendCallback(() =>
+                {
+                    mypower--;
+                    MyResultPower.GetComponent<SpriteRenderer>().sprite = Card.NumberSprite(mypower < 0 ? 0 : mypower);
+                    MyBattleArrow.SetActive(true);
+                });
+                mysequence.Append(MyBattleArrow.transform.DOScale(0.3f, 0.1f).SetEase(Ease.Linear));
+                mysequence.Join(MyResultPower.transform.DOScale(-0.1f, 0.1f).SetRelative());
+                mysequence.Append(MyBattleArrow.transform.DOScale(0.4f, 0.4f));
+                mysequence.AppendCallback(() => { MyBattleArrow.SetActive(false); });
+            }
+
+            if (c2 > 0)
+            {
+                RivalBattleArrow.GetComponent<SpriteRenderer>().color = Color.red;
+                rivalsequence.AppendCallback(() => {
+                    rivalpower++;
+                    RivalResultPower.GetComponent<SpriteRenderer>().sprite = Card.NumberSprite(rivalpower);
+                    RivalBattleArrow.SetActive(true);
+                });
+                rivalsequence.Append(RivalBattleArrow.transform.DOScale(0.6f, 0.1f).SetEase(Ease.Linear));
+                rivalsequence.Join(RivalResultPower.transform.DOScale(0.1f, 0.1f).SetRelative());
+                rivalsequence.Append(RivalBattleArrow.transform.DOScale(0.4f, 0.4f));
+                rivalsequence.AppendCallback(() => { RivalBattleArrow.SetActive(false); });
+            }
+            else if (c2 < 0)
+            {
+                RivalBattleArrow.GetComponent<SpriteRenderer>().color = Color.blue;
+                rivalsequence.AppendCallback(() => {
+                    rivalpower--;
+                    RivalResultPower.GetComponent<SpriteRenderer>().sprite = Card.NumberSprite(rivalpower < 0 ? 0 : rivalpower);
+                    RivalBattleArrow.SetActive(true);
+                });
+                rivalsequence.Append(RivalBattleArrow.transform.DOScale(0.3f, 0.1f).SetEase(Ease.Linear));
+                rivalsequence.Join(RivalResultPower.transform.DOScale(-0.1f, 0.1f).SetRelative());
+                rivalsequence.Append(RivalBattleArrow.transform.DOScale(0.4f, 0.4f));
+                rivalsequence.AppendCallback(() => { RivalBattleArrow.SetActive(false); });
+            }
+
+        }
+
+        yield return new WaitForSeconds(1f);
 
         SetSortingGroupOrder(Myself.Battle, 1);
         SetSortingGroupOrder(Rival.Battle, 1);
 
-        if ( data.damage == 0)
+        if (data.damage < 0)
+            AudioSource.PlayOneShot(AudioAttack);
+        else if ( data.damage == 0)
         {
             AudioSource.PlayOneShot(AudioAttackOffset);
         }
@@ -265,7 +403,6 @@ public class GameClient : MonoBehaviour
         }
 
 
-        List<MoveObject> moves = new List<MoveObject>(12);
 
         for (int i = 0;i < data.myself.draw.Length ; i++)
         {
@@ -281,6 +418,9 @@ public class GameClient : MonoBehaviour
             SetSortingGroupOrder(o,5);
             Rival.Hand.Add(o);
         }
+
+        MyResultPower.SetActive(false);
+        RivalResultPower.SetActive(false);
         if (data.phase < 0)
         {
             int mylife = data.myself.deckcount + Myself.Hand.Count - System.Convert.ToInt32(data.damage > 0);
@@ -294,12 +434,14 @@ public class GameClient : MonoBehaviour
             FrontCanvas.SetActive(true);
             Phase = data.phase;
             InEffect = false;
-            DisplayoffGuidMessage();
 
             Server.Terminalize();
             Server = null;
             yield break;
         }
+
+
+
 
         if (Myself.Used.Count > 0)
             SetSortingGroupOrder(Myself.Used[Myself.Used.Count - 1], 0);
@@ -313,7 +455,8 @@ public class GameClient : MonoBehaviour
             Myself.Battle.transform.DOMove(Myself.UsedPosition, 0.5f);
             Rival.Battle.transform.DOMove(Rival.UsedPosition, 0.5f);
         }
-
+        Myself.Hand.RemoveAt(data.myself.select);
+        Rival.Hand.RemoveAt(data.rival.select);
         for (int i = 0; i < Myself.Hand.Count; i++)
         {
             Myself.Hand[i].transform.DOMove(MyHandSelectors[i].transform.position, 0.5f);
@@ -330,7 +473,6 @@ public class GameClient : MonoBehaviour
         Myself.DeckCount.text = data.myself.deckcount.ToString();
         Rival.DeckCount.text = data.rival.deckcount.ToString();
 
-        string guidmessage = "Select Damage Card";
         if ((data.phase & 1) == 0)
         {
             for (int i = 0; i < Myself.Hand.Count; i++)
@@ -351,7 +493,6 @@ public class GameClient : MonoBehaviour
             {
                 Rival.Used[Rival.Used.Count - 2].SetActive(false);
             }
-            guidmessage = "Select Battle Card";
         }
         Phase = data.phase;
         InEffect = false;
@@ -359,17 +500,14 @@ public class GameClient : MonoBehaviour
         if ((data.phase & 1) == 1 && data.damage <= 0)
         {
             DecideCard(-1);
-            guidmessage = "Wait Rival Damage Select";
         }
         else
             PhaseStartTime = Time.realtimeSinceStartup;
 
-        DisplayGuidMessage(guidmessage, GuidMessage_Y);
    }
 
     public IEnumerator DamageEffect(UpdateData data)
     {
-        DisplayoffGuidMessage();
         Myself.Battle.transform.DOMove(Myself.UsedPosition, 0.5f);
         Rival.Battle.transform.DOMove(Rival.UsedPosition, 0.5f);
 
@@ -440,7 +578,6 @@ public class GameClient : MonoBehaviour
 
         Phase = data.phase;
         InEffect = false;
-        DisplayGuidMessage("Select Battle Card", GuidMessage_Y);
         PhaseStartTime = Time.realtimeSinceStartup;
     }
 
@@ -502,7 +639,6 @@ public class GameClient : MonoBehaviour
 
         if ((Phase & 1) == 0)
         {
-            DisplayGuidMessage("Wait Rival Battle Select", GuidMessage_Y);
             WaitCircle.SetActive(true);
             Server.SendSelect(Phase, index);
         }
@@ -514,7 +650,6 @@ public class GameClient : MonoBehaviour
 
     void UpdateCallback(UpdateData data, string abort)
     {
-        Debug.Log("Update Callback");
         StartCoroutine(UpdateCoroutine(data,abort));
     }
     private Coroutine EffectCoroutin = null;
@@ -563,17 +698,6 @@ public class GameClient : MonoBehaviour
     public void Surrender()
     {
         Server?.SendSurrender();
-    }
-
-    private void DisplayGuidMessage(string text,int y)
-    {
-        OverrayCanvas.SetActive(true);
-        GuidMessage.text = text;
-        GuidMessage.transform.parent.transform.localPosition = new Vector3(0,y);
-    }
-    private void DisplayoffGuidMessage()
-    {
-        OverrayCanvas.SetActive(false);
     }
 
 }

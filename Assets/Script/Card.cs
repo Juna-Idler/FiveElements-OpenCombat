@@ -11,6 +11,15 @@ public class Card : MonoBehaviour
     public static GameClient Client;
 
     private static Sprite[] NumberSprites;
+    public static Sprite NumberSprite(int num)
+    {
+        if (NumberSprites == null)
+        {
+            NumberSprites = Resources.LoadAll<Sprite>("Number");
+        }
+        return  NumberSprites[num];
+    }
+
     private static readonly Color[] ElementColors =
     {
         new Color(0, 0.5f, 0.6f),
@@ -24,18 +33,12 @@ public class Card : MonoBehaviour
     {
         CardData = data;
 
-        if (NumberSprites == null)
-        {
-            NumberSprites = Resources.LoadAll<Sprite>("Number");
-        }
-        Sprite image = NumberSprites[CardData.Power];
-
         GameObject face = transform.GetChild(0).gameObject;
         SpriteRenderer renderer = face.GetComponent<SpriteRenderer>();
         renderer.color = ElementColors[(int)CardData.Element];
         GameObject number = transform.GetChild(0).GetChild(0).gameObject;
         SpriteRenderer sprite = number.GetComponent<SpriteRenderer>();
-        sprite.sprite = image;
+        sprite.sprite = NumberSprite(CardData.Power);
     }
 
 }
