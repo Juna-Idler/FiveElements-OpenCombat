@@ -246,10 +246,13 @@ public class GameClient : MonoBehaviour
         MyResultPower.GetComponent<SpriteRenderer>().sprite = Card.NumberSprite(myBattleData.Power);
         MyResultPower.transform.localScale = new Vector3(0.8f, 0.8f);
         MyResultPower.SetActive(true);
+        Myself.Battle.transform.GetChild(0).GetChild(0).gameObject.SetActive(false);
+
         CardData rivalBattleData = Rival.Battle.GetComponent<Card>().CardData;
         RivalResultPower.GetComponent<SpriteRenderer>().sprite = Card.NumberSprite(rivalBattleData.Power);
         RivalResultPower.transform.localScale = new Vector3(0.8f, 0.8f);
         RivalResultPower.SetActive(true);
+        Rival.Battle.transform.GetChild(0).GetChild(0).gameObject.SetActive(false);
 
         int mypower = myBattleData.Power;
         int rivalpower = rivalBattleData.Power;
@@ -383,7 +386,6 @@ public class GameClient : MonoBehaviour
                 rivalsequence.Append(RivalBattleArrow.transform.DOScale(0.4f, 0.4f));
                 rivalsequence.AppendCallback(() => { RivalBattleArrow.SetActive(false); });
             }
-
         }
 
         yield return new WaitForSeconds(1f);
@@ -419,8 +421,21 @@ public class GameClient : MonoBehaviour
             Rival.Hand.Add(o);
         }
 
-        MyResultPower.SetActive(false);
-        RivalResultPower.SetActive(false);
+        Myself.Battle.transform.GetChild(0).GetChild(0).gameObject.SetActive(true);
+        Rival.Battle.transform.GetChild(0).GetChild(0).gameObject.SetActive(true);
+
+        MyResultPower.GetComponent<SpriteRenderer>().DOFade(0, 0.2f).SetEase(Ease.Linear).OnComplete(() =>
+        {
+            MyResultPower.SetActive(false);
+            MyResultPower.GetComponent<SpriteRenderer>().color = Color.white;
+        });
+        RivalResultPower.GetComponent<SpriteRenderer>().DOFade(0, 0.2f).SetEase(Ease.Linear).OnComplete(() =>
+        {
+            RivalResultPower.SetActive(false);
+            RivalResultPower.GetComponent<SpriteRenderer>().color = Color.white;
+        });
+
+
         if (data.phase < 0)
         {
             int mylife = data.myself.deckcount + Myself.Hand.Count - System.Convert.ToInt32(data.damage > 0);
