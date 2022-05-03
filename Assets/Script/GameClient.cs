@@ -96,6 +96,13 @@ public class GameClient : MonoBehaviour
 
 
     public GameObject Cards;
+
+    public GameObject MyUsed;
+    public GameObject RivalUsed;
+    public GameObject MyDamage;
+    public GameObject RivalDamage;
+
+
     public GameObject FrontCanvas;
     public Text Message;
 
@@ -109,14 +116,15 @@ public class GameClient : MonoBehaviour
 
     public GameObject WaitCircle;
 
-    public GameObject MySupportArrow;
-    public GameObject RivalSupportArrow;
+    public Arrow MySupportArrow;
+    public Arrow RivalSupportArrow;
 
-    public GameObject MyBattleArrow;
-    public GameObject RivalBattleArrow;
+    public Arrow MyBattleArrow;
+    public Arrow RivalBattleArrow;
 
-    public GameObject MyResultPower;
-    public GameObject RivalResultPower;
+
+    public BattleAvatar MyBattleAvatar;
+    public BattleAvatar RivalBattleAvatar;
 
     public bool InEffect { get; private set; } = false;
 
@@ -243,22 +251,15 @@ public class GameClient : MonoBehaviour
 
 
         CardData myBattleData = Myself.Battle.GetComponent<Card>().CardData;
-        MyResultPower.GetComponent<SpriteRenderer>().sprite = Card.NumberSprite(myBattleData.Power);
-        MyResultPower.transform.localScale = new Vector3(0.8f, 0.8f);
-        MyResultPower.SetActive(true);
-        Myself.Battle.transform.GetChild(0).GetChild(0).gameObject.SetActive(false);
-
         CardData rivalBattleData = Rival.Battle.GetComponent<Card>().CardData;
-        RivalResultPower.GetComponent<SpriteRenderer>().sprite = Card.NumberSprite(rivalBattleData.Power);
-        RivalResultPower.transform.localScale = new Vector3(0.8f, 0.8f);
-        RivalResultPower.SetActive(true);
-        Rival.Battle.transform.GetChild(0).GetChild(0).gameObject.SetActive(false);
+
+        MyBattleAvatar.Appearance(Myself.BattlePosition, myBattleData.Element, myBattleData.Power);
+        RivalBattleAvatar.Appearance(Rival.BattlePosition, rivalBattleData.Element, rivalBattleData.Power);
+
+
 
         int mypower = myBattleData.Power;
         int rivalpower = rivalBattleData.Power;
-
-        Sequence mysequence = DOTween.Sequence();
-        Sequence rivalsequence = DOTween.Sequence();
 
         if (Myself.Used.Count > 0)
         {
@@ -266,129 +267,66 @@ public class GameClient : MonoBehaviour
             int c = CardData.Chemistry(myBattleData.Element, mySupportData.Element);
             if (c > 0)
             {
-                MySupportArrow.GetComponent<SpriteRenderer>().color = Color.red;
-                mysequence.AppendCallback(() => { 
-                    mypower++;
-                    MyResultPower.GetComponent<SpriteRenderer>().sprite = Card.NumberSprite(mypower); 
-                    MySupportArrow.SetActive(true);
-                });
-                mysequence.Append(MySupportArrow.transform.DOScale(0.6f, 0.1f).SetEase(Ease.Linear));
-                mysequence.Join(MyResultPower.transform.DOScale(0.1f, 0.1f).SetRelative());
-                mysequence.Append(MySupportArrow.transform.DOScale(0.4f, 0.4f));
-                mysequence.AppendCallback(() => { MySupportArrow.SetActive(false); });
+                mypower++;
+                MyBattleAvatar.Raise(mypower);
+                MySupportArrow.StartAnimationPlus();
             }
             else if (c < 0)
             {
-                MySupportArrow.GetComponent<SpriteRenderer>().color = Color.blue;
-                mysequence.AppendCallback(() => {
-                    mypower--;
-                    MyResultPower.GetComponent<SpriteRenderer>().sprite = Card.NumberSprite(mypower < 0 ? 0 : mypower);
-                    MySupportArrow.SetActive(true);
-                });
-                mysequence.Append(MySupportArrow.transform.DOScale(0.3f, 0.1f).SetEase(Ease.Linear));
-                mysequence.Join(MyResultPower.transform.DOScale(-0.1f, 0.1f).SetRelative());
-                mysequence.Append(MySupportArrow.transform.DOScale(0.4f, 0.4f));
-                mysequence.AppendCallback(() => { MySupportArrow.SetActive(false); });
+                mypower = mypower - 1 < 0 ? 0 : mypower - 1;
+                MyBattleAvatar.Reduce(mypower);
+                MySupportArrow.StartAnimationMinus();
             }
-            else
-            {
-                mysequence.AppendInterval(0.5f);
-            }
-
             CardData rivalSupportData = Rival.Used[^1].GetComponent<Card>().CardData;
             c = CardData.Chemistry(rivalBattleData.Element, rivalSupportData.Element);
             if (c > 0)
             {
-                RivalSupportArrow.GetComponent<SpriteRenderer>().color = Color.red;
-                rivalsequence.AppendCallback(() => {
-                     rivalpower++;
-                   RivalResultPower.GetComponent<SpriteRenderer>().sprite = Card.NumberSprite(rivalpower);
-                    RivalSupportArrow.SetActive(true);
-                });
-                rivalsequence.Append(RivalSupportArrow.transform.DOScale(0.6f, 0.1f).SetEase(Ease.Linear));
-                rivalsequence.Join(RivalResultPower.transform.DOScale(0.1f, 0.1f).SetRelative());
-                rivalsequence.Append(RivalSupportArrow.transform.DOScale(0.4f, 0.4f));
-                rivalsequence.AppendCallback(() => { RivalSupportArrow.SetActive(false); });
+                rivalpower++;
+                RivalBattleAvatar.Raise(rivalpower);
+                RivalSupportArrow.StartAnimationPlus();
             }
             else if (c < 0)
             {
-                RivalSupportArrow.GetComponent<SpriteRenderer>().color = Color.blue;
-                rivalsequence.AppendCallback(() =>
-                {
-                    rivalpower--;
-                    RivalResultPower.GetComponent<SpriteRenderer>().sprite = Card.NumberSprite(rivalpower < 0 ? 0 : rivalpower);
-                    RivalSupportArrow.SetActive(true);
-                });
-                rivalsequence.Append(RivalSupportArrow.transform.DOScale(0.3f, 0.1f).SetEase(Ease.Linear));
-                rivalsequence.Join(RivalResultPower.transform.DOScale(-0.1f, 0.1f).SetRelative());
-                rivalsequence.Append(RivalSupportArrow.transform.DOScale(0.4f, 0.4f));
-                rivalsequence.AppendCallback(() => { RivalSupportArrow.SetActive(false); });
-            }
-            else
-            {
-                rivalsequence.AppendInterval(0.5f);
+                rivalpower = rivalpower - 1 < 0 ? 0 : rivalpower - 1;
+                RivalBattleAvatar.Reduce(rivalpower);
+                RivalSupportArrow.StartAnimationMinus();
             }
         }
+        yield return new WaitForSeconds(0.5f);
         {
             int c1 = CardData.Chemistry(myBattleData.Element, rivalBattleData.Element);
             int c2 = CardData.Chemistry(rivalBattleData.Element, myBattleData.Element);
             if (c1 > 0)
             {
-                MyBattleArrow.GetComponent<SpriteRenderer>().color = Color.red;
-                mysequence.AppendCallback(() => {
-                    mypower++;
-                    MyResultPower.GetComponent<SpriteRenderer>().sprite = Card.NumberSprite(mypower);
-                    MyBattleArrow.SetActive(true);
-                });
-                mysequence.Append(MyBattleArrow.transform.DOScale(0.6f, 0.1f).SetEase(Ease.Linear));
-                mysequence.Join(MyResultPower.transform.DOScale(0.1f, 0.1f).SetRelative());
-                mysequence.Append(MyBattleArrow.transform.DOScale(0.4f, 0.4f));
-                mysequence.AppendCallback(() => { MyBattleArrow.SetActive(false); });
+                mypower++;
+                MyBattleAvatar.Raise(mypower);
+                MyBattleArrow.StartAnimationPlus();
             }
             else if (c1 < 0)
             {
-                MyBattleArrow.GetComponent<SpriteRenderer>().color = Color.blue;
-                mysequence.AppendCallback(() =>
-                {
-                    mypower--;
-                    MyResultPower.GetComponent<SpriteRenderer>().sprite = Card.NumberSprite(mypower < 0 ? 0 : mypower);
-                    MyBattleArrow.SetActive(true);
-                });
-                mysequence.Append(MyBattleArrow.transform.DOScale(0.3f, 0.1f).SetEase(Ease.Linear));
-                mysequence.Join(MyResultPower.transform.DOScale(-0.1f, 0.1f).SetRelative());
-                mysequence.Append(MyBattleArrow.transform.DOScale(0.4f, 0.4f));
-                mysequence.AppendCallback(() => { MyBattleArrow.SetActive(false); });
+                mypower = mypower - 1 < 0 ? 0 : mypower - 1;
+                MyBattleAvatar.Reduce(mypower);
+                MyBattleArrow.StartAnimationMinus();
             }
 
             if (c2 > 0)
             {
-                RivalBattleArrow.GetComponent<SpriteRenderer>().color = Color.red;
-                rivalsequence.AppendCallback(() => {
-                    rivalpower++;
-                    RivalResultPower.GetComponent<SpriteRenderer>().sprite = Card.NumberSprite(rivalpower);
-                    RivalBattleArrow.SetActive(true);
-                });
-                rivalsequence.Append(RivalBattleArrow.transform.DOScale(0.6f, 0.1f).SetEase(Ease.Linear));
-                rivalsequence.Join(RivalResultPower.transform.DOScale(0.1f, 0.1f).SetRelative());
-                rivalsequence.Append(RivalBattleArrow.transform.DOScale(0.4f, 0.4f));
-                rivalsequence.AppendCallback(() => { RivalBattleArrow.SetActive(false); });
+                rivalpower++;
+                RivalBattleAvatar.Raise(rivalpower);
+                RivalBattleArrow.StartAnimationPlus();
             }
             else if (c2 < 0)
             {
-                RivalBattleArrow.GetComponent<SpriteRenderer>().color = Color.blue;
-                rivalsequence.AppendCallback(() => {
-                    rivalpower--;
-                    RivalResultPower.GetComponent<SpriteRenderer>().sprite = Card.NumberSprite(rivalpower < 0 ? 0 : rivalpower);
-                    RivalBattleArrow.SetActive(true);
-                });
-                rivalsequence.Append(RivalBattleArrow.transform.DOScale(0.3f, 0.1f).SetEase(Ease.Linear));
-                rivalsequence.Join(RivalResultPower.transform.DOScale(-0.1f, 0.1f).SetRelative());
-                rivalsequence.Append(RivalBattleArrow.transform.DOScale(0.4f, 0.4f));
-                rivalsequence.AppendCallback(() => { RivalBattleArrow.SetActive(false); });
+                rivalpower = rivalpower - 1 < 0 ? 0 : rivalpower - 1;
+                RivalBattleAvatar.Reduce(rivalpower);
+                RivalBattleArrow.StartAnimationMinus();
             }
         }
 
-        yield return new WaitForSeconds(1f);
+        yield return new WaitForSeconds(0.5f);
+
+        MyBattleAvatar.Disappearance();
+        RivalBattleAvatar.Disappearance();
 
         SetSortingGroupOrder(Myself.Battle, 1);
         SetSortingGroupOrder(Rival.Battle, 1);
@@ -404,8 +342,6 @@ public class GameClient : MonoBehaviour
             AudioSource.PlayOneShot(AudioDamage);
         }
 
-
-
         for (int i = 0;i < data.myself.draw.Length ; i++)
         {
             GameObject o = CreateCard(data.myself.draw[i]);
@@ -420,20 +356,6 @@ public class GameClient : MonoBehaviour
             SetSortingGroupOrder(o,5);
             Rival.Hand.Add(o);
         }
-
-        Myself.Battle.transform.GetChild(0).GetChild(0).gameObject.SetActive(true);
-        Rival.Battle.transform.GetChild(0).GetChild(0).gameObject.SetActive(true);
-
-        MyResultPower.GetComponent<SpriteRenderer>().DOFade(0, 0.2f).SetEase(Ease.Linear).OnComplete(() =>
-        {
-            MyResultPower.SetActive(false);
-            MyResultPower.GetComponent<SpriteRenderer>().color = Color.white;
-        });
-        RivalResultPower.GetComponent<SpriteRenderer>().DOFade(0, 0.2f).SetEase(Ease.Linear).OnComplete(() =>
-        {
-            RivalResultPower.SetActive(false);
-            RivalResultPower.GetComponent<SpriteRenderer>().color = Color.white;
-        });
 
 
         if (data.phase < 0)
@@ -465,6 +387,10 @@ public class GameClient : MonoBehaviour
 
         Myself.Used.Add(Myself.Battle);
         Rival.Used.Add(Rival.Battle);
+
+        Myself.Battle.transform.SetParent(MyUsed.transform);
+        Rival.Battle.transform.SetParent(RivalUsed.transform);
+
         if ((data.phase & 1) == 0)
         {
             Myself.Battle.transform.DOMove(Myself.UsedPosition, 0.5f);
@@ -538,6 +464,7 @@ public class GameClient : MonoBehaviour
             DeleteObject = Myself.Hand[data.myself.select];
             Myself.Hand.RemoveAt(data.myself.select);
             Myself.Damage.Add(DeleteObject);
+            DeleteObject.transform.SetParent(MyDamage.transform);
 
             DeleteObject.transform.DOMove(Myself.DamagePosition, 0.5f);
             SetSortingGroupOrder(DeleteObject, 10);
@@ -559,6 +486,8 @@ public class GameClient : MonoBehaviour
             DeleteObject = Rival.Hand[data.rival.select];
             Rival.Hand.RemoveAt(data.rival.select);
             Rival.Damage.Add(DeleteObject);
+            DeleteObject.transform.SetParent(RivalDamage.transform);
+
 
             DeleteObject.transform.DOMove(Rival.DamagePosition, 0.5f);
             SetSortingGroupOrder(DeleteObject, 10);

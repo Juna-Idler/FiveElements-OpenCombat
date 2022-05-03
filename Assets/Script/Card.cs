@@ -20,7 +20,7 @@ public class Card : MonoBehaviour
         return  NumberSprites[num];
     }
 
-    private static readonly Color[] ElementColors =
+    public static readonly Color[] ElementColors =
     {
         new Color(0, 0.5f, 0.6f),
         new Color(0.9f, 0, 0),
