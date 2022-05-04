@@ -64,8 +64,8 @@ public class GameClient : MonoBehaviour
 
     public class PlayerObjects
     {
-        public Vector3 BattlePosition;
-        public Vector3 UsedPosition;
+        public Vector2 BattlePosition;
+        public Vector2 UsedPosition;
         public Vector3 DamagePosition;
         public Vector3 DeckPosition;
 
@@ -176,10 +176,10 @@ public class GameClient : MonoBehaviour
         Myself = new PlayerObjects();
         Rival = new PlayerObjects();
 
-        Myself.BattlePosition = GameObject.Find("MyBattle").transform.position;
-        Rival.BattlePosition = GameObject.Find("YourBattle").transform.position;
-        Myself.UsedPosition = GameObject.Find("MyUsed").transform.position;
-        Rival.UsedPosition = GameObject.Find("YourUsed").transform.position;
+        Myself.BattlePosition = new Vector2(70,0);
+        Rival.BattlePosition = new Vector2(-70, 0);
+        Myself.UsedPosition = new Vector2(200, 0);
+        Rival.UsedPosition = new Vector2(-200, 0);
         Myself.DamagePosition = GameObject.Find("MyDamage").transform.position;
         Rival.DamagePosition = GameObject.Find("YourDamage").transform.position;
         Myself.DeckPosition = GameObject.Find("MyDeck").transform.position;
@@ -346,27 +346,42 @@ public class GameClient : MonoBehaviour
         yield return new WaitForSeconds(0.5f);
 
 //最終値でなんか戦闘の勝敗演出
-        const float result_time = 0.5f;
+        const float result_time = 1f;
+
+
+        if (data.damage < 0)
+        {
+            MyBattleAvatar.Attack();
+            RivalBattleAvatar.Damage();
+
+            AudioSource.PlayOneShot(AudioAttack);
+        }
+        else if (data.damage > 0)
+        {
+            RivalBattleAvatar.Attack();
+            MyBattleAvatar.Damage();
+
+            AudioSource.PlayOneShot(AudioDamage);
+        }
+        else if (data.damage == 0)
+        {
+            MyBattleAvatar.Attack();
+            RivalBattleAvatar.Attack();
+            AudioSource.PlayOneShot(AudioAttackOffset);
+
+        }
+
+
 
         SetSortingGroupOrder(Myself.Battle, 1);
         SetSortingGroupOrder(Rival.Battle, 1);
 
-        if (data.damage < 0)
-            AudioSource.PlayOneShot(AudioAttack);
-        else if ( data.damage == 0)
-        {
-            AudioSource.PlayOneShot(AudioAttackOffset);
-        }
-        else if (data.damage > 0)
-        {
-            AudioSource.PlayOneShot(AudioDamage);
-        }
 
         yield return new WaitForSeconds(result_time);
 
-//勝敗演出が終われば消える
-        MyBattleAvatar.Disappearance();
-        RivalBattleAvatar.Disappearance();
+//勝敗演出内でそのまま消える
+//        MyBattleAvatar.Disappearance();
+//        RivalBattleAvatar.Disappearance();
 
 //ゲームの勝敗が決まった
         if (data.phase < 0)
