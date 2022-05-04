@@ -49,9 +49,9 @@ public class CardData
         水
     }
 
-    public int ID;
-    public FiveElements Element;
-    public int Power;
+    public readonly int ID;
+    public readonly FiveElements Element;
+    public readonly int Power;
 
     public CardData(int id,FiveElements elementt,int power)
     {

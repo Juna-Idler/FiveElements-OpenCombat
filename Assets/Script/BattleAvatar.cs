@@ -6,46 +6,49 @@ using DG.Tweening;
 
 public class BattleAvatar : MonoBehaviour
 {
-    public SpriteRenderer Base;
-    public SpriteRenderer Power;
+    public SpriteRenderer BaseSprite;
+    public SpriteRenderer PowerSprite;
 
-    private Sequence Sequence;
-    // Start is called before the first frame update
-    void Start()
-    {
+    public int Power;
 
-    }
-    public void Appearance(Vector3 pos,CardData.FiveElements element,int power)
+
+    public void Appearance(Vector3 pos,CardData data)
     {
+        Power = data.Power;
         gameObject.transform.position = pos;
-        Base.color = Card.ElementColors[(int)element];
-        Power.sprite = Card.NumberSprite(power);
-        gameObject.transform.localScale = new Vector3(0.9f + 0.1f * power, 0.9f + 0.1f * power, 1);
+        BaseSprite.color = Card.ElementColors[(int)data.Element];
+        PowerSprite.sprite = Card.NumberSprite(Power);
+        gameObject.transform.localScale = new Vector3(0.8f, 0.8f, 1);
         gameObject.SetActive(true);
 
-        Sequence = DOTween.Sequence();
-        Sequence.Append(Base.DOFade(1, 0.3f));
-        Sequence.Join(Power.DOFade(1, 0.3f));
+        DOTween.Sequence()
+            .Append(BaseSprite.DOFade(1, 0.3f))
+            .Join(PowerSprite.DOFade(1, 0.3f))
+            .Join(gameObject.transform.DOScale(0.9f + 0.1f * Power, 0.1f));
+       
     }
     public void Disappearance()
     {
-        Sequence = DOTween.Sequence();
-        Sequence.Append(Base.DOFade(0, 1f))
-                .Join(Power.DOFade(0, 1f))
-                .AppendCallback(() => gameObject.SetActive(false))
-                .SetAutoKill(true);
+        DOTween.Sequence()
+            .Append(BaseSprite.DOFade(0, 1f))
+            .Join(PowerSprite.DOFade(0, 1f))
+            .Join(gameObject.transform.DOScale(0.8f, 1f))
+            .AppendCallback(() => gameObject.SetActive(false));
     }
 
-    public void Raise(int power)
+    public void Raise(int plus = 1)
     {
-        Sequence = DOTween.Sequence();
-        Sequence.AppendCallback(() => Power.sprite = Card.NumberSprite(power))
-                .Append(gameObject.transform.DOScale(0.9f + 0.1f * power, 0.1f));
+        Power += plus;
+        DOTween.Sequence()
+            .AppendCallback(() => PowerSprite.sprite = Card.NumberSprite(Power))
+            .Append(gameObject.transform.DOScale(0.9f + 0.1f * Power, 0.1f));
     }
-    public void Reduce(int power)
+    public void Reduce(int minus = 1)
     {
-        Sequence = DOTween.Sequence();
-        Sequence.AppendCallback(() => Power.sprite = Card.NumberSprite(power))
-                .Append(gameObject.transform.DOScale(0.9f + 0.1f * power, 0.1f));
+        Power -= minus;
+        if (Power < 0) Power = 0;
+        DOTween.Sequence()
+            .AppendCallback(() => PowerSprite.sprite = Card.NumberSprite(Power))
+            .Append(gameObject.transform.DOScale(0.9f + 0.1f * Power, 0.1f));
     }
 }

@@ -4,7 +4,7 @@ using UnityEngine;
 public class CardCatalog
 {
     [System.Serializable]
-    struct JsonCatalog
+    private struct JsonCatalog
     {
         [System.Serializable]
         public struct Card

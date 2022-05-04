@@ -110,8 +110,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 973b61df7423cf24d982e79c92959c79, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Base: {fileID: 4352777622504384247}
-  Power: {fileID: 4352777624480835361}
+  BaseSprite: {fileID: 4352777622504384247}
+  PowerSprite: {fileID: 4352777624480835361}
+  Power: 0
 --- !u!1 &4352777624480835367
 GameObject:
   m_ObjectHideFlags: 0
