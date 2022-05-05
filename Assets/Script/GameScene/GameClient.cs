@@ -17,7 +17,7 @@ public class GameClient : MonoBehaviour
         Server = GameSceneParam.GameServer;
         if (Server == null)
         {
-            Server = new OfflineGameServer("Tester");
+            Server = new OfflineGameServer("Tester",new RandomCommander());
         }
         Server.SetUpdateCallback(UpdateCallback);
 

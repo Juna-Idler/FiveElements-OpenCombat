@@ -129,7 +129,7 @@ public class TitleSceneScript : MonoBehaviour
         string name = NameInput.GetComponent<InputField>().text;
         PlayerPrefs.SetString("name", name);
 
-        IGameServer server = new OfflineGameServer(name);
+        IGameServer server = new OfflineGameServer(name,new RandomCommander());
 
         GameSceneParam.GameServer = server;
 

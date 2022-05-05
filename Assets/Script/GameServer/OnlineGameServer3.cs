@@ -94,7 +94,6 @@ public class OnlineGameServer3 : IGameServer
             Debug.Log("WS OnOpen:Send FirstCommand");
         };
 
-        System.Threading.SynchronizationContext context = System.Threading.SynchronizationContext.Current;
         ws.OnMessage += (byte[] data) =>
         {
             Debug.Log("WS OnMessage:");

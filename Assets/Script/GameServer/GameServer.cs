@@ -1,8 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-
-using System.Threading.Tasks;
-
 public interface IGameServer
 {
     delegate void UpdateCallback(UpdateData data,string abort);
