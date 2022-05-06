@@ -9,7 +9,7 @@ public class OfflineGameServer : IGameServer
     private string PlayerName;
 
     private ICPUCommander Commander;
-    private Task<int> Result;
+    private int Result;
 
     public OfflineGameServer(string name, ICPUCommander commander)
     {
@@ -53,25 +53,28 @@ public class OfflineGameServer : IGameServer
         Callback = callback;
     }
 
-    async void IGameServer.SendSelect(int phase,int index)
+    void IGameServer.SendSelect(int phase,int index)
     {
         System.Threading.SynchronizationContext context = System.Threading.SynchronizationContext.Current;
-//        _ = Task.Run(async () =>
-        {
-            int index2 = await Result;
-            GameProcessor.Decide(index, index2);
-            int p = GameProcessor.Phase, damage = GameProcessor.BattleDamage;
-            UpdateData.PlayerData p1 = CreateUpdatePlayerData(GameProcessor.Player1);
-            UpdateData.PlayerData p2 = CreateUpdatePlayerData(GameProcessor.Player2);
-            UpdateData p1update = new() { phase = p, damage = damage, myself = p1, rival = p2 };
-            UpdateData p2update = new() { phase = p, damage = -damage, myself = p2, rival = p1 };
+        int index2 = Result;
+        GameProcessor.Decide(index, index2);
 
-//            context.Post(_ => {
-                Callback(p1update, null);
-//            }, null);
-            Result = Commander.Select(p2update);
+        int p = GameProcessor.Phase;
+        int damage = GameProcessor.BattleDamage;
+        UpdateData.PlayerData p1 = CreateUpdatePlayerData(GameProcessor.Player1);
+        UpdateData.PlayerData p2 = CreateUpdatePlayerData(GameProcessor.Player2);
+        UpdateData p1update = new() { phase = p, damage = damage, myself = p1, rival = p2 };
+        UpdateData p2update = new() { phase = p, damage = -damage, myself = p2, rival = p1 };
+
+        if ((GameProcessor.Phase & 1) == 1)
+        {
+            Result = Commander.DamageSelect(p2update);
         }
-//        );
+        else
+        {
+            Result = Commander.BattleSelect(p2update);
+        }
+        Callback(p1update, null);
     }
 
      void IGameServer.SendSurrender()

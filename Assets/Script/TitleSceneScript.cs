@@ -22,14 +22,21 @@ public class TitleSceneScript : MonoBehaviour
 
     public InputField NameInput;
 
+    private readonly Level1Commander Level1 = new Level1Commander();
+    private readonly RandomCommander Random = new RandomCommander();
 
-//    private readonly OnlineGameServer Server = new OnlineGameServer();
-//    private readonly OnlineGameServer2 Server = new OnlineGameServer2();
+    private ICPUCommander Commander;
+
+
+    //    private readonly OnlineGameServer Server = new OnlineGameServer();
+    //    private readonly OnlineGameServer2 Server = new OnlineGameServer2();
     private readonly OnlineGameServer3 Server = new OnlineGameServer3();
     private readonly PunGameServer PunServer = new PunGameServer();
 
     private void Start()
     {
+        Commander = Level1;
+
         string name = PlayerPrefs.GetString("name", "");
         NameInput.GetComponent<InputField>().text = name;
 
@@ -129,11 +136,24 @@ public class TitleSceneScript : MonoBehaviour
         string name = NameInput.GetComponent<InputField>().text;
         PlayerPrefs.SetString("name", name);
 
-        IGameServer server = new OfflineGameServer(name,new RandomCommander());
+        IGameServer server = new OfflineGameServer(name,Commander);
 
         GameSceneParam.GameServer = server;
 
         SceneManager.LoadScene("GameScene");
     }
+    public void ChangeLevel(int index)
+    {
+        switch(index)
+        {
+            case 1:
+                Commander = Level1;
+                break;
 
+            case 0:
+            default:
+                Commander = Random;
+                break;
+        }
+    }
 }

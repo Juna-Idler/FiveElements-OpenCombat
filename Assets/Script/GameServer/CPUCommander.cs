@@ -5,10 +5,11 @@ public interface ICPUCommander
 {
     string Name { get; }
 
-    Task<int> FirstSelect(int[] myhand, int[] rivalhand);
+    int FirstSelect(int[] myhand, int[] rivalhand);
 
-    Task<int> Select(UpdateData data);
+    int BattleSelect(UpdateData data);
 
+    int DamageSelect(UpdateData data);
 
 
     public class Information

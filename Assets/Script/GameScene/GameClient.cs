@@ -14,10 +14,11 @@ public class GameClient : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        CardCatalog cc = CardCatalog.Instance;
         Server = GameSceneParam.GameServer;
         if (Server == null)
         {
-            Server = new OfflineGameServer("Tester",new RandomCommander());
+            Server = new OfflineGameServer("Tester",new Level1Commander());
         }
         Server.SetUpdateCallback(UpdateCallback);
 
@@ -89,6 +90,8 @@ public class GameClient : MonoBehaviour
     public HandSelector[] MyHandSelectors;
     public HandChecker[] RivalHandCheckers;
 
+
+    public Text RoundText;
     public Text Timer;
     private float PhaseStartTime;
 
@@ -103,6 +106,8 @@ public class GameClient : MonoBehaviour
     public GameObject MyDamage;
     public GameObject RivalDamage;
 
+    public Image MyHandBackImage;
+    public Image RivalHandBackImage;
 
     public GameObject FrontCanvas;
     public Text Message;
@@ -127,8 +132,8 @@ public class GameClient : MonoBehaviour
     public BattleAvatar MyBattleAvatar;
     public BattleAvatar RivalBattleAvatar;
 
-    public bool InEffect { get; private set; } = false;
 
+    public bool InEffect { get; private set; } = false;
 
 
     private static GameObject CardPrefab;
@@ -160,6 +165,8 @@ public class GameClient : MonoBehaviour
         CardArrayIndex = 0;
 
         Phase = 0;
+
+        RoundText.text = $"Round {Phase / 2 + 1}\nBattle";
 
         for (int i = 0; i < 5;i++)
         {
@@ -379,9 +386,6 @@ public class GameClient : MonoBehaviour
 
         yield return new WaitForSeconds(result_time);
 
-//勝敗演出内でそのまま消える
-//        MyBattleAvatar.Disappearance();
-//        RivalBattleAvatar.Disappearance();
 
 //ゲームの勝敗が決まった
         if (data.phase < 0)
@@ -430,8 +434,10 @@ public class GameClient : MonoBehaviour
 
 
 //フェイズ移行処理
+        InEffect = false;
         if ((data.phase & 1) == 0)
         {
+            RoundText.text = $"Round {Phase / 2 + 1}\nBattle";
             for (int i = 0; i < Myself.Hand.Count; i++)
             {
                 int j = CardData.Chemistry(Myself.Hand[i].GetComponent<Card>().CardData.Element, Myself.Used.Last().GetComponent<Card>().CardData.Element);
@@ -445,14 +451,17 @@ public class GameClient : MonoBehaviour
             if (Myself.Support != null) Myself.Support.SetActive(false);
             if (Rival.Support != null) Rival.Support.SetActive(false);
         }
-        InEffect = false;
-
-        if ((data.phase & 1) == 1 && data.damage <= 0)
-        {
-            DecideCard(-1);
-        }
         else
-            PhaseStartTime = Time.realtimeSinceStartup;
+        {
+            RoundText.text = $"Round {Phase / 2 + 1}\nDamage";
+            if (data.damage <= 0)
+            {
+                DecideCard(-1);
+                yield break;
+            }
+            MyHandBackImage.color = new Color(1, 0, 0, 100f / 256f);
+        }
+        PhaseStartTime = Time.realtimeSinceStartup;
    }
 
     public IEnumerator DamageEffect(UpdateData data)
@@ -523,6 +532,8 @@ public class GameClient : MonoBehaviour
             int j = CardData.Chemistry(Rival.Hand[i].GetComponent<Card>().CardData.Element, Rival.Used.Last().GetComponent<Card>().CardData.Element);
             RivalHandCheckers[i].SetPlusMinus(j);
         }
+        MyHandBackImage.color = new Color(1, 1, 1, 100f / 256f);
+        RoundText.text = $"Round {Phase / 2 + 1}\nBattle";
 
         InEffect = false;
         PhaseStartTime = Time.realtimeSinceStartup;
