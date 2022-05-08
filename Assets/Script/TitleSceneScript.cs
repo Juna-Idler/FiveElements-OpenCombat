@@ -22,8 +22,9 @@ public class TitleSceneScript : MonoBehaviour
 
     public InputField NameInput;
 
-    private readonly Level1Commander Level1 = new Level1Commander();
     private readonly RandomCommander Random = new RandomCommander();
+    private readonly Level1Commander Level1 = new Level1Commander();
+    private readonly Level2Commander Level2 = new Level2Commander();
 
     private ICPUCommander Commander;
 
@@ -148,6 +149,9 @@ public class TitleSceneScript : MonoBehaviour
         {
             case 1:
                 Commander = Level1;
+                break;
+            case 2:
+                Commander = Level2;
                 break;
 
             case 0:
