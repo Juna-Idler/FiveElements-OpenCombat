@@ -65,3 +65,6 @@ ignore.conf
 /[Aa]ssets/Sound/
 /[Aa]ssets/Photon/
 /[Aa]ssets/Plugins/
+
+/[Aa]ssets/unitychan/
+

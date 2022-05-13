@@ -1854,7 +1854,7 @@ MonoBehaviour:
   m_Value: 1
   m_Options:
     m_Options:
-    - m_Text: Random
+    - m_Text: Level0
       m_Image: {fileID: 0}
     - m_Text: Level1
       m_Image: {fileID: 0}

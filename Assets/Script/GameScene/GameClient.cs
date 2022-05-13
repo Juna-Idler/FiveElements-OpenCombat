@@ -87,6 +87,8 @@ public class GameClient : MonoBehaviour
     public Text RivalName;
 
     //Inspectorで設定するのが楽なのでpublic
+    //手札枚数に融通を利かすなら固定配列という訳にもいかないか
+
     public HandSelector[] MyHandSelectors;
     public HandChecker[] RivalHandCheckers;
 
@@ -113,10 +115,9 @@ public class GameClient : MonoBehaviour
     public Text Message;
 
 
-    public AudioClip AudioAttack;
-    public AudioClip AudioAttackOffset;
-    public AudioClip AudioDamage;
-    public AudioClip AudioRecover;
+    public PlayerAvatar MyAvatar;
+    public PlayerAvatar RivalAvatar;
+
 
     public AudioSource AudioSource;
 
@@ -187,8 +188,8 @@ public class GameClient : MonoBehaviour
         Rival.BattlePosition = new Vector2(-70, 0);
         Myself.UsedPosition = new Vector2(200, 0);
         Rival.UsedPosition = new Vector2(-200, 0);
-        Myself.DamagePosition = GameObject.Find("MyDamage").transform.position;
-        Rival.DamagePosition = GameObject.Find("YourDamage").transform.position;
+        Myself.DamagePosition = new Vector2(350, 0);
+        Rival.DamagePosition = new Vector2(-350, 0);
         Myself.DeckPosition = GameObject.Find("MyDeck").transform.position;
         Rival.DeckPosition = GameObject.Find("YourDeck").transform.position;
 
@@ -361,21 +362,23 @@ public class GameClient : MonoBehaviour
             MyBattleAvatar.Attack();
             RivalBattleAvatar.Damage();
 
-            AudioSource.PlayOneShot(AudioAttack);
+            AudioSource.PlayOneShot( MyAvatar.AudioAttack);
+            AudioSource.PlayOneShot(RivalAvatar.AudioDamage);
         }
         else if (data.damage > 0)
         {
             RivalBattleAvatar.Attack();
             MyBattleAvatar.Damage();
 
-            AudioSource.PlayOneShot(AudioDamage);
+            AudioSource.PlayOneShot(MyAvatar.AudioDamage);
+            AudioSource.PlayOneShot(RivalAvatar.AudioAttack);
         }
         else if (data.damage == 0)
         {
             MyBattleAvatar.Attack();
             RivalBattleAvatar.Attack();
-            AudioSource.PlayOneShot(AudioAttackOffset);
-
+            AudioSource.PlayOneShot(MyAvatar.AudioAttackOffset);
+            AudioSource.PlayOneShot(RivalAvatar.AudioAttackOffset);
         }
 
 
@@ -393,11 +396,19 @@ public class GameClient : MonoBehaviour
             int mylife = data.myself.deckcount + Myself.Hand.Count - System.Convert.ToInt32(data.damage > 0);
             int rivallife = data.rival.deckcount + Rival.Hand.Count - System.Convert.ToInt32(data.damage < 0);
             if (mylife > rivallife)
+            {
                 Message.text = "Win";
+                AudioSource.PlayOneShot(MyAvatar.AudioWin);
+            }
             else if (mylife < rivallife)
+            {
                 Message.text = "Lose";
+                AudioSource.PlayOneShot(RivalAvatar.AudioWin);
+            }
             else
+            {
                 Message.text = "Draw";
+            }
             FrontCanvas.SetActive(true);
             Phase = data.phase;
             InEffect = false;
@@ -487,7 +498,7 @@ public class GameClient : MonoBehaviour
                 Myself.Hand[i].transform.DOMove(MyHandSelectors[i].transform.position, 0.5f);
                 MyHandSelectors[i].Card = Myself.Hand[i];
             }
-            AudioSource.PlayOneShot(AudioRecover);
+            AudioSource.PlayOneShot(MyAvatar.AudioRecover);
         }
         else if (data.damage < 0)
         {
@@ -507,9 +518,11 @@ public class GameClient : MonoBehaviour
             SetSortingGroupOrder(DeleteObject, 10);
             for (int i = 0; i < Rival.Hand.Count; i++)
                 Rival.Hand[i].transform.DOMove(RivalHandCheckers[i].transform.position, 0.5f);
+
+            AudioSource.PlayOneShot(RivalAvatar.AudioRecover);
         }
 
-//
+        //
         Myself.Battle.transform.DOMove(Myself.UsedPosition, 0.5f);
         Rival.Battle.transform.DOMove(Rival.UsedPosition, 0.5f);
 
