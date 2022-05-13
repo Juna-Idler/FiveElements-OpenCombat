@@ -27,7 +27,11 @@ public class GameClient : MonoBehaviour
         if (CardPrefab == null)
             CardPrefab = Resources.Load<GameObject>("Card");
         Card.Client = this;
+        if (HandSelectorPrefab == null)
+            HandSelectorPrefab = Resources.Load<GameObject>("HandSelector");
         HandSelector.Client = this;
+        if (HandCheckerPrefab == null)
+            HandCheckerPrefab = Resources.Load<GameObject>("HandChecker");
         HandChecker.Client = this;
 
         CardArray = new GameObject[40];
@@ -86,11 +90,12 @@ public class GameClient : MonoBehaviour
     public Text MyName;
     public Text RivalName;
 
-    //Inspectorで設定するのが楽なのでpublic
-    //手札枚数に融通を利かすなら固定配列という訳にもいかないか
 
-    public HandSelector[] MyHandSelectors;
-    public HandChecker[] RivalHandCheckers;
+    public GameObject MyHandArea;
+    public GameObject RivalHandArea;
+
+    private readonly List<HandSelector> MyHandSelectors = new List<HandSelector>(10);
+    private readonly List<HandChecker> RivalHandCheckers = new List<HandChecker>(10);
 
 
     public Text RoundText;
@@ -138,6 +143,8 @@ public class GameClient : MonoBehaviour
 
 
     private static GameObject CardPrefab;
+    private static GameObject HandSelectorPrefab;
+    private static GameObject HandCheckerPrefab;
 
     private GameObject[] CardArray;
     private int CardArrayIndex;
@@ -157,6 +164,45 @@ public class GameClient : MonoBehaviour
         sg.sortingOrder = order;
     }
 
+    private void SetHandCount(int myhandcount,int rivalhandcount)
+    {
+        if (myhandcount > MyHandSelectors.Count)
+        {
+            for (int i = MyHandSelectors.Count; i < myhandcount; i++)
+            {
+                GameObject go = Instantiate(HandSelectorPrefab);
+                HandSelector hs = go.GetComponent<HandSelector>();
+                MyHandSelectors.Add(hs);
+                go.transform.SetParent(MyHandArea.transform);
+                hs.Index = i;
+            }
+        }
+        if (rivalhandcount > RivalHandCheckers.Count)
+        {
+            for (int i = RivalHandCheckers.Count; i < rivalhandcount; i++)
+            {
+                GameObject go = Instantiate(HandCheckerPrefab);
+                HandChecker hc = go.GetComponent<HandChecker>();
+                RivalHandCheckers.Add(hc);
+                go.transform.SetParent(RivalHandArea.transform);
+                hc.Index = i;
+            }
+        }
+
+        for (int i = 0; i < MyHandSelectors.Count; i++)
+        {
+            MyHandSelectors[i].gameObject.SetActive(i < myhandcount);
+            MyHandSelectors[i].ResetAllOption();
+
+        }
+        for (int i = 0; i < RivalHandCheckers.Count; i++)
+        {
+            RivalHandCheckers[i].gameObject.SetActive(i < rivalhandcount);
+            RivalHandCheckers[i].ResetAllOption();
+        }
+        Canvas.ForceUpdateCanvases();
+    }
+
     public void InitializeField(InitialData data)
     {
         foreach (GameObject c in CardArray)
@@ -169,17 +215,7 @@ public class GameClient : MonoBehaviour
 
         RoundText.text = $"Round {Phase / 2 + 1}\nBattle";
 
-        for (int i = 0; i < 5;i++)
-        {
-            MyHandSelectors[i].gameObject.SetActive(i < data.myhand.Length);
-            MyHandSelectors[i].ResetAllOption();
-        }
-        for (int i = 0; i < 5; i++)
-        {
-            RivalHandCheckers[i].gameObject.SetActive(i < data.rivalhand.Length);
-            RivalHandCheckers[i].ResetAllOption();
-        }
-        Canvas.ForceUpdateCanvases();
+        SetHandCount(data.myhand.Length, data.rivalhand.Length);
 
         Myself = new PlayerObjects();
         Rival = new PlayerObjects();
@@ -190,8 +226,8 @@ public class GameClient : MonoBehaviour
         Rival.UsedPosition = new Vector2(-200, 0);
         Myself.DamagePosition = new Vector2(350, 0);
         Rival.DamagePosition = new Vector2(-350, 0);
-        Myself.DeckPosition = GameObject.Find("MyDeck").transform.position;
-        Rival.DeckPosition = GameObject.Find("YourDeck").transform.position;
+        Myself.DeckPosition = new Vector2(350, -200);
+        Rival.DeckPosition = new Vector2(-350, 200);
 
 
         Myself.Hand = new List<GameObject>(data.myhand.Length + 1);
@@ -263,19 +299,11 @@ public class GameClient : MonoBehaviour
             SetSortingGroupOrder(o, 5);
             Rival.Hand.Add(o);
         }
+        SetHandCount(Myself.Hand.Count, Rival.Hand.Count);
         for (int i = 0; i < Myself.Hand.Count; i++)
         {
             MyHandSelectors[i].Card = Myself.Hand[i];
         }
-
-        for (int i = 0; i < 5; i++)
-        {
-            MyHandSelectors[i].ResetAllOption();
-            RivalHandCheckers[i].ResetAllOption();
-            MyHandSelectors[i].gameObject.SetActive(i < Myself.Hand.Count);
-            RivalHandCheckers[i].gameObject.SetActive(i < Rival.Hand.Count);
-        }
-        Canvas.ForceUpdateCanvases();
 
 
 //手札から戦場に移動
@@ -480,11 +508,7 @@ public class GameClient : MonoBehaviour
         GameObject DeleteObject = null;
         if (data.damage > 0)
         {
-            for (int i = 0; i < 5; i++)
-            {
-                MyHandSelectors[i].gameObject.SetActive(i < Myself.Hand.Count - 1);
-            }
-            Canvas.ForceUpdateCanvases();
+            SetHandCount(Myself.Hand.Count - 1, Rival.Hand.Count);
 
             DeleteObject = Myself.Hand[data.myself.select];
             Myself.Hand.RemoveAt(data.myself.select);
@@ -502,11 +526,7 @@ public class GameClient : MonoBehaviour
         }
         else if (data.damage < 0)
         {
-            for (int i = 0; i < 5; i++)
-            {
-                RivalHandCheckers[i].gameObject.SetActive(i < Rival.Hand.Count - 1);
-            }
-            Canvas.ForceUpdateCanvases();
+            SetHandCount(Myself.Hand.Count, Rival.Hand.Count - 1);
 
             DeleteObject = Rival.Hand[data.rival.select];
             Rival.Hand.RemoveAt(data.rival.select);
