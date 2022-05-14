@@ -24,14 +24,8 @@ public class GameClient : MonoBehaviour
 
         InitialData data = Server.GetInitialData();
 
-        if (CardPrefab == null)
-            CardPrefab = Resources.Load<GameObject>("Card");
         Card.Client = this;
-        if (HandSelectorPrefab == null)
-            HandSelectorPrefab = Resources.Load<GameObject>("HandSelector");
         HandSelector.Client = this;
-        if (HandCheckerPrefab == null)
-            HandCheckerPrefab = Resources.Load<GameObject>("HandChecker");
         HandChecker.Client = this;
 
         CardArray = new GameObject[40];
@@ -47,6 +41,7 @@ public class GameClient : MonoBehaviour
         InitializeField(data);
         FrontCanvas.SetActive(false);
         PhaseStartTime = Time.realtimeSinceStartup;
+        SelectTimer.SetActive(BattleTimeLimit);
     }
 
     void Update()
@@ -56,13 +51,12 @@ public class GameClient : MonoBehaviour
             float sec = Time.realtimeSinceStartup - PhaseStartTime;
             float remain = (((Phase & 1) == 0) ? BattleTimeLimit : DamageTimeLimit) - sec;
             if (remain < 0)
+            {
+                SelectTimer.gameObject.SetActive(false);
                 DecideCard(0);
+            }
             else
-                Timer.text = remain.ToString("F");
-        }
-        else
-        {
-            Timer.text = "";
+                SelectTimer.SetTime(remain);
         }
     }
 
@@ -99,7 +93,9 @@ public class GameClient : MonoBehaviour
 
 
     public Text RoundText;
-    public Text Timer;
+
+    public SelectTimer SelectTimer;
+
     private float PhaseStartTime;
 
     private float BattleTimeLimit;
@@ -142,9 +138,9 @@ public class GameClient : MonoBehaviour
     public bool InEffect { get; private set; } = false;
 
 
-    private static GameObject CardPrefab;
-    private static GameObject HandSelectorPrefab;
-    private static GameObject HandCheckerPrefab;
+    public GameObject CardPrefab;
+    public GameObject HandSelectorPrefab;
+    public GameObject HandCheckerPrefab;
 
     private GameObject[] CardArray;
     private int CardArrayIndex;
@@ -235,7 +231,7 @@ public class GameClient : MonoBehaviour
         {
             GameObject o = CreateCard(data.myhand[i]);
             o.transform.position = MyHandSelectors[i].transform.position;
-            SetSortingGroupOrder(o, 5);
+            SetSortingGroupOrder(o, i+1);
             Myself.Hand.Add(o);
             MyHandSelectors[i].Card = o;
         }
@@ -252,7 +248,7 @@ public class GameClient : MonoBehaviour
         {
             GameObject o = CreateCard(data.rivalhand[i]);
             o.transform.position = RivalHandCheckers[i].transform.position;
-            SetSortingGroupOrder(o, 5);
+            SetSortingGroupOrder(o, i+1);
             Rival.Hand.Add(o);
         }
 
@@ -289,27 +285,29 @@ public class GameClient : MonoBehaviour
         {
             GameObject o = CreateCard(data.myself.draw[i],false);
             o.transform.position = Myself.DeckPosition;
-            SetSortingGroupOrder(o, 5);
             Myself.Hand.Add(o);
         }
         for (int i = 0; i < data.rival.draw.Length; i++)
         {
             GameObject o = CreateCard(data.rival.draw[i],false);
             o.transform.position = Rival.DeckPosition;
-            SetSortingGroupOrder(o, 5);
             Rival.Hand.Add(o);
         }
         SetHandCount(Myself.Hand.Count, Rival.Hand.Count);
         for (int i = 0; i < Myself.Hand.Count; i++)
         {
             MyHandSelectors[i].Card = Myself.Hand[i];
+            SetSortingGroupOrder(Myself.Hand[i], i + 1);
+        }
+        for (int i = 0; i < Rival.Hand.Count; i++)
+        {
+            SetSortingGroupOrder(Rival.Hand[i], i + 1);
         }
 
+        //手札から戦場に移動
 
-//手札から戦場に移動
-
-        SetSortingGroupOrder(Myself.Battle, 6);
-        SetSortingGroupOrder(Rival.Battle, 6);
+        SetSortingGroupOrder(Myself.Battle, 10);
+        SetSortingGroupOrder(Rival.Battle, 10);
 
         const float move_time = 0.5f;
         Myself.Battle.transform.DOMove(Myself.BattlePosition, move_time);
@@ -489,6 +487,8 @@ public class GameClient : MonoBehaviour
             }
             if (Myself.Support != null) Myself.Support.SetActive(false);
             if (Rival.Support != null) Rival.Support.SetActive(false);
+
+            SelectTimer.SetActive(BattleTimeLimit);
         }
         else
         {
@@ -499,9 +499,10 @@ public class GameClient : MonoBehaviour
                 yield break;
             }
             MyHandBackImage.color = new Color(1, 0, 0, 100f / 256f);
+            SelectTimer.SetActive(DamageTimeLimit);
         }
         PhaseStartTime = Time.realtimeSinceStartup;
-   }
+    }
 
     public IEnumerator DamageEffect(UpdateData data)
     {
@@ -570,6 +571,7 @@ public class GameClient : MonoBehaviour
 
         InEffect = false;
         PhaseStartTime = Time.realtimeSinceStartup;
+        SelectTimer.SetActive(BattleTimeLimit);
     }
 
 
@@ -593,6 +595,13 @@ public class GameClient : MonoBehaviour
                                        mysupport, rivalsupport);
                 RivalHandCheckers[i].SetMaruBatu(j);
             }
+/*
+            for (int i = 0; i < Myself.Hand.Count; i++)
+            {
+                Image image = MyHandSelectors[i].gameObject.GetComponent<Image>();
+                image.color = index == i ? new Color(1, 1, 0, 0.5f) : Color.clear;
+            }
+*/
         }
     }
     public void SelectRivalCard(int index)
@@ -620,13 +629,8 @@ public class GameClient : MonoBehaviour
 
         InEffect = true;
         PhaseStartTime = -1;
+        SelectTimer.gameObject.SetActive(false);
 
-        if (index >= 0 && index < Myself.Hand.Count)
-        {
-            Vector3 tmp = Myself.Hand[index].transform.localPosition;
-            tmp.y += 50;
-            Myself.Hand[index].transform.localPosition = tmp;
-        }
 
         if ((Phase & 1) == 0)
         {
@@ -676,6 +680,7 @@ public class GameClient : MonoBehaviour
             yield break;
         InEffect = true;
         PhaseStartTime = -1;
+        SelectTimer.gameObject.SetActive(false);
 
         if ((Phase & 1) == 0)
         {
