@@ -41,7 +41,7 @@ public class GameClient : MonoBehaviour
         InitializeField(data);
         FrontCanvas.SetActive(false);
         PhaseStartTime = Time.realtimeSinceStartup;
-        SelectTimer.SetActive(BattleTimeLimit);
+        TimeBar.SetActive(BattleTimeLimit);
     }
 
     void Update()
@@ -52,11 +52,13 @@ public class GameClient : MonoBehaviour
             float remain = (((Phase & 1) == 0) ? BattleTimeLimit : DamageTimeLimit) - sec;
             if (remain < 0)
             {
-                SelectTimer.gameObject.SetActive(false);
+                TimeBar.gameObject.SetActive(false);
                 DecideCard(0);
             }
             else
-                SelectTimer.SetTime(remain);
+            {
+                TimeBar.SetTime(remain);
+            }
         }
     }
 
@@ -94,7 +96,7 @@ public class GameClient : MonoBehaviour
 
     public Text RoundText;
 
-    public SelectTimer SelectTimer;
+    public TimeBar TimeBar;
 
     private float PhaseStartTime;
 
@@ -488,7 +490,7 @@ public class GameClient : MonoBehaviour
             if (Myself.Support != null) Myself.Support.SetActive(false);
             if (Rival.Support != null) Rival.Support.SetActive(false);
 
-            SelectTimer.SetActive(BattleTimeLimit);
+            TimeBar.SetActive(BattleTimeLimit);
         }
         else
         {
@@ -499,7 +501,7 @@ public class GameClient : MonoBehaviour
                 yield break;
             }
             MyHandBackImage.color = new Color(1, 0, 0, 100f / 256f);
-            SelectTimer.SetActive(DamageTimeLimit);
+            TimeBar.SetActive(DamageTimeLimit);
         }
         PhaseStartTime = Time.realtimeSinceStartup;
     }
@@ -571,7 +573,7 @@ public class GameClient : MonoBehaviour
 
         InEffect = false;
         PhaseStartTime = Time.realtimeSinceStartup;
-        SelectTimer.SetActive(BattleTimeLimit);
+        TimeBar.SetActive(BattleTimeLimit);
     }
 
 
@@ -629,7 +631,8 @@ public class GameClient : MonoBehaviour
 
         InEffect = true;
         PhaseStartTime = -1;
-        SelectTimer.gameObject.SetActive(false);
+        TimeBar.gameObject.SetActive(false);
+
 
 
         if ((Phase & 1) == 0)
@@ -680,7 +683,7 @@ public class GameClient : MonoBehaviour
             yield break;
         InEffect = true;
         PhaseStartTime = -1;
-        SelectTimer.gameObject.SetActive(false);
+        TimeBar.gameObject.SetActive(false);
 
         if ((Phase & 1) == 0)
         {
