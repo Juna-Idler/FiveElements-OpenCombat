@@ -396,6 +396,7 @@ public class GameClient : MonoBehaviour
         {
             MyBattleAvatar.Attack();
             RivalBattleAvatar.Damage();
+            RivalAvatar.ChangeExpression(PlayerAvatar.Expression.痛み);
 
             AudioSource.PlayOneShot( MyAvatar.AudioAttack);
             AudioSource.PlayOneShot(RivalAvatar.AudioDamage);
@@ -404,6 +405,7 @@ public class GameClient : MonoBehaviour
         {
             RivalBattleAvatar.Attack();
             MyBattleAvatar.Damage();
+            MyAvatar.ChangeExpression(PlayerAvatar.Expression.痛み);
 
             AudioSource.PlayOneShot(MyAvatar.AudioDamage);
             AudioSource.PlayOneShot(RivalAvatar.AudioAttack);
@@ -558,6 +560,9 @@ public class GameClient : MonoBehaviour
 
         yield return new WaitForSeconds(0.5f);
 
+        RivalAvatar.ChangeExpression(PlayerAvatar.Expression.普通);
+        MyAvatar.ChangeExpression(PlayerAvatar.Expression.普通);
+
 
         if (Myself.Support != null) Myself.Support.SetActive(false);
         if (Rival.Support != null) Rival.Support.SetActive(false);
@@ -631,12 +636,12 @@ public class GameClient : MonoBehaviour
     public void ClickMyUsed()
     {
         if (!InEffect && Myself.Used.Count > 0)
-            CardListView.Open(Myself.Used.ToArray(), Myself.Used.Last());
+            CardListView.Open(Myself.Used.ToArray());
     }
     public void ClickRivalUsed()
     {
         if (!InEffect && Rival.Used.Count > 0)
-            CardListView.Open(Rival.Used.ToArray(), Rival.Used.Last());
+            CardListView.Open(Rival.Used.ToArray());
     }
 
     public void ClickMyDamage()

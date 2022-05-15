@@ -14,6 +14,7 @@ public class CardCatalog
             public int Power;
         }
         public Card[] CardCatalog;
+        public int version;
     }
 
     static CardCatalog()

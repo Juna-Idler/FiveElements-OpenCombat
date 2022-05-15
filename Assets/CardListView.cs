@@ -41,7 +41,7 @@ public class CardListView : MonoBehaviour
 
     public bool IsOpen => ItemCount > 0;
 
-    public void Open(GameObject[] cards,GameObject support = null)
+    public void Open(GameObject[] cards)
     {
         for (int i = 0; i < cards.Length;i++)
         {
@@ -50,7 +50,7 @@ public class CardListView : MonoBehaviour
             Items[i].OriginalActive = cards[i].activeSelf;
             cards[i].SetActive(true);
             SetSortingGroupOrder(cards[i], 51 + i);
-            cards[i].transform.DOMove(Items[i].transform.position, 0.3f).SetEase(Ease.Linear);
+            cards[i].transform.DOMove(Items[i].transform.position, 0.3f);
         }
         ItemCount = cards.Length;
 
