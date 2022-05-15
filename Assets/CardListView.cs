@@ -10,6 +10,7 @@ using DG.Tweening;
 
 public class CardListView : MonoBehaviour
 {
+    public Canvas Canvas;
     public GameObject ListItemPrefab;
     public GameObject GridLayoutGroup;
 
@@ -26,10 +27,10 @@ public class CardListView : MonoBehaviour
             Items[i].Index = i;
             go.transform.SetParent(GridLayoutGroup.transform);
         }
-//強引な座標計算
-        gameObject.SetActive(true);
+        //強引な座標計算
+        Canvas.enabled = true;
         Canvas.ForceUpdateCanvases();
-        gameObject.SetActive(false);
+        Canvas.enabled = false;
     }
 
     static void SetSortingGroupOrder(GameObject card, int order)
@@ -53,7 +54,7 @@ public class CardListView : MonoBehaviour
         }
         ItemCount = cards.Length;
 
-        gameObject.SetActive(true);
+        Canvas.enabled = true;
     }
 
     public void Close()
@@ -67,7 +68,7 @@ public class CardListView : MonoBehaviour
         }
         ItemCount = 0;
 
-        gameObject.SetActive(false);
+        Canvas.enabled = false;
     }
 
 
