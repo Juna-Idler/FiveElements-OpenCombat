@@ -37,7 +37,7 @@ public class GameClient : MonoBehaviour
         }
         CardArrayIndex = 0;
 
-
+        CardListView.Initialize();
         InitializeField(data);
         FrontCanvas.SetActive(false);
         PhaseStartTime = Time.realtimeSinceStartup;
@@ -52,6 +52,8 @@ public class GameClient : MonoBehaviour
             float remain = (((Phase & 1) == 0) ? BattleTimeLimit : DamageTimeLimit) - sec;
             if (remain < 0)
             {
+                if (CardListView.IsOpen)
+                    CardListView.Close();
                 TimeBar.gameObject.SetActive(false);
                 DecideCard(0);
             }
@@ -103,13 +105,18 @@ public class GameClient : MonoBehaviour
     private float BattleTimeLimit;
     private float DamageTimeLimit;
 
-
+    //ヒエラルキーで見やすくするためだけの空オブジェクト
     public GameObject Cards;
 
     public GameObject MyUsed;
     public GameObject RivalUsed;
     public GameObject MyDamage;
     public GameObject RivalDamage;
+
+
+//カードリスト表示UI
+    public CardListView CardListView;
+
 
     public Image MyHandBackImage;
     public Image RivalHandBackImage;
@@ -619,6 +626,28 @@ public class GameClient : MonoBehaviour
                 MyHandSelectors[i].SetMaruBatu(j);
             }
         }
+    }
+
+    public void ClickMyUsed()
+    {
+        if (!InEffect && Myself.Used.Count > 0)
+            CardListView.Open(Myself.Used.ToArray(), Myself.Used.Last());
+    }
+    public void ClickRivalUsed()
+    {
+        if (!InEffect && Rival.Used.Count > 0)
+            CardListView.Open(Rival.Used.ToArray(), Rival.Used.Last());
+    }
+
+    public void ClickMyDamage()
+    {
+        if (!InEffect && Myself.Damage.Count > 0)
+            CardListView.Open(Myself.Damage.ToArray());
+    }
+    public void ClickRivalDamage()
+    {
+        if (!InEffect && Rival.Damage.Count > 0)
+            CardListView.Open(Rival.Damage.ToArray());
     }
 
     public void DecideCard(int index)
