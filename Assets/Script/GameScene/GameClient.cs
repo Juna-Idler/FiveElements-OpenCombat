@@ -442,12 +442,6 @@ public class GameClient : MonoBehaviour
             RivalAvatar.ChangeExpression(PlayerAvatar.Expression.驚き);
         }
 
-
-
-        SetSortingGroupOrder(Myself.Battle, 1);
-        SetSortingGroupOrder(Rival.Battle, 1);
-
-
         yield return new WaitForSeconds(result_time);
 
 
@@ -485,8 +479,6 @@ public class GameClient : MonoBehaviour
 
         //対戦後演出
         const float after_time = 0.5f;
-        if (Myself.Support != null) SetSortingGroupOrder(Myself.Support, 0);
-        if (Rival.Support != null) SetSortingGroupOrder(Rival.Support, 0);
 
         if ((data.phase & 1) == 0)
         {
@@ -509,7 +501,7 @@ public class GameClient : MonoBehaviour
         yield return new WaitForSeconds(after_time);
 
 
-//フェイズ移行処理
+        //フェイズ移行処理
         InEffect = false;
         if ((data.phase & 1) == 0)
         {
@@ -524,6 +516,8 @@ public class GameClient : MonoBehaviour
                 int j = CardData.Chemistry(Rival.Hand[i].GetComponent<Card>().CardData.Element, Rival.Used.Last().GetComponent<Card>().CardData.Element);
                 RivalHandCheckers[i].SetPlusMinus(j);
             }
+            SetSortingGroupOrder(Myself.Battle, 0);
+            SetSortingGroupOrder(Rival.Battle, 0);
             if (Myself.Support != null) Myself.Support.SetActive(false);
             if (Rival.Support != null) Rival.Support.SetActive(false);
 
@@ -594,7 +588,8 @@ public class GameClient : MonoBehaviour
         RivalAvatar.ChangeExpression(PlayerAvatar.Expression.普通);
         MyAvatar.ChangeExpression(PlayerAvatar.Expression.普通);
 
-
+        SetSortingGroupOrder(Myself.Battle, 0);
+        SetSortingGroupOrder(Rival.Battle, 0);
         if (Myself.Support != null) Myself.Support.SetActive(false);
         if (Rival.Support != null) Rival.Support.SetActive(false);
 
