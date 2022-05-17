@@ -196,18 +196,42 @@ public class GameClient : MonoBehaviour
             }
         }
 
-        for (int i = 0; i < MyHandSelectors.Count; i++)
         {
-            MyHandSelectors[i].gameObject.SetActive(i < myhandcount);
-            MyHandSelectors[i].ResetAllOption();
+            RectTransform rect = MyHandArea.GetComponent<RectTransform>();
+            float step = rect.sizeDelta.x / (myhandcount + 1);
 
+            for (int i = 0; i < MyHandSelectors.Count; i++)
+            {
+                if (i < myhandcount)
+                {
+                    MyHandSelectors[i].gameObject.transform.localPosition = new Vector2(-rect.sizeDelta.x / 2 + step * (i + 1), 0);
+                    MyHandSelectors[i].gameObject.SetActive(true);
+                    MyHandSelectors[i].ResetAllOption();
+                }
+                else
+                {
+                    MyHandSelectors[i].gameObject.SetActive(false);
+                }
+            }
         }
-        for (int i = 0; i < RivalHandCheckers.Count; i++)
         {
-            RivalHandCheckers[i].gameObject.SetActive(i < rivalhandcount);
-            RivalHandCheckers[i].ResetAllOption();
+            RectTransform rect = RivalHandArea.GetComponent<RectTransform>();
+            float step = rect.sizeDelta.x / (rivalhandcount + 1);
+
+            for (int i = 0; i < RivalHandCheckers.Count; i++)
+            {
+                if (i < rivalhandcount)
+                {
+                    RivalHandCheckers[i].gameObject.transform.localPosition = new Vector2(-rect.sizeDelta.x / 2 + step * (i + 1), 0);
+                    RivalHandCheckers[i].gameObject.SetActive(true);
+                    RivalHandCheckers[i].ResetAllOption();
+                }
+                else
+                {
+                    RivalHandCheckers[i].gameObject.SetActive(false);
+                }
+            }
         }
-        Canvas.ForceUpdateCanvases();
     }
 
     public void InitializeField(InitialData data)
