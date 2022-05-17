@@ -199,12 +199,18 @@ public class GameClient : MonoBehaviour
         {
             RectTransform rect = MyHandArea.GetComponent<RectTransform>();
             float step = rect.sizeDelta.x / (myhandcount + 1);
+            float start = -rect.sizeDelta.x / 2 + step;
+            if (step < 100 + 10)
+            {
+                start = -rect.sizeDelta.x / 2 + 50 + 5;
+                step = (rect.sizeDelta.x - (100 + 10)) / (myhandcount + 1 - 2);
+            }
 
             for (int i = 0; i < MyHandSelectors.Count; i++)
             {
                 if (i < myhandcount)
                 {
-                    MyHandSelectors[i].gameObject.transform.localPosition = new Vector2(-rect.sizeDelta.x / 2 + step * (i + 1), 0);
+                    MyHandSelectors[i].gameObject.transform.localPosition = new Vector2(start + step * i, 0);
                     MyHandSelectors[i].gameObject.SetActive(true);
                     MyHandSelectors[i].ResetAllOption();
                 }
@@ -217,12 +223,18 @@ public class GameClient : MonoBehaviour
         {
             RectTransform rect = RivalHandArea.GetComponent<RectTransform>();
             float step = rect.sizeDelta.x / (rivalhandcount + 1);
+            float start = -rect.sizeDelta.x / 2 + step;
+            if (step < 100 + 10)
+            {
+                start = -rect.sizeDelta.x / 2 + 50 + 5;
+                step = (rect.sizeDelta.x - (100 + 10)) / (myhandcount + 1 - 2);
+            }
 
             for (int i = 0; i < RivalHandCheckers.Count; i++)
             {
                 if (i < rivalhandcount)
                 {
-                    RivalHandCheckers[i].gameObject.transform.localPosition = new Vector2(-rect.sizeDelta.x / 2 + step * (i + 1), 0);
+                    RivalHandCheckers[i].gameObject.transform.localPosition = new Vector2(start + step * i, 0);
                     RivalHandCheckers[i].gameObject.SetActive(true);
                     RivalHandCheckers[i].ResetAllOption();
                 }
