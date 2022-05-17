@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 public class GameProcessor
 {
-    public static readonly System.Random random = new();
+//    public static readonly System.Random random = new();
 
     public class PlayerData
     {
@@ -23,7 +23,7 @@ public class GameProcessor
                 array[i] = i + 1;
                 array[10 + i] = i + 1;
             }
-            deck = new LinkedList<int>(array.OrderBy(x => random.Next()));
+            deck = new LinkedList<int>(array.OrderBy(x => UnityEngine.Random.Range(int.MinValue, int.MaxValue)));
             DrawCard(4);
         }
         public void DrawCard(int count)

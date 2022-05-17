@@ -97,8 +97,8 @@ public class GameClient : MonoBehaviour
     private readonly List<HandSelector> MyHandSelectors = new List<HandSelector>(10);
     private readonly List<HandChecker> RivalHandCheckers = new List<HandChecker>(10);
 
+    public RoundDisplay RoundDisplay;
 
-    public Text RoundText;
 
     public TimeBar TimeBar;
 
@@ -244,7 +244,7 @@ public class GameClient : MonoBehaviour
 
         Phase = 0;
 
-        RoundText.text = $"Round {Phase / 2 + 1}\nBattle";
+        RoundDisplay.ChangeRound(Phase / 2 + 1);
 
         SetHandCount(data.myhand.Length, data.rivalhand.Length);
 
@@ -505,7 +505,7 @@ public class GameClient : MonoBehaviour
         InEffect = false;
         if ((data.phase & 1) == 0)
         {
-            RoundText.text = $"Round {Phase / 2 + 1}\nBattle";
+            RoundDisplay.ChangeRound(Phase / 2 + 1);
             for (int i = 0; i < Myself.Hand.Count; i++)
             {
                 int j = CardData.Chemistry(Myself.Hand[i].GetComponent<Card>().CardData.Element, Myself.Used.Last().GetComponent<Card>().CardData.Element);
@@ -528,7 +528,7 @@ public class GameClient : MonoBehaviour
         }
         else
         {
-            RoundText.text = $"Round {Phase / 2 + 1}\nDamage";
+            RoundDisplay.ChangeDamagePhase();
             if (data.damage <= 0)
             {
                 DecideCard(-1);
@@ -607,7 +607,8 @@ public class GameClient : MonoBehaviour
             RivalHandCheckers[i].SetPlusMinus(j);
         }
         MyHandBackImage.color = new Color(1, 1, 1, 100f / 256f);
-        RoundText.text = $"Round {Phase / 2 + 1}\nBattle";
+
+        RoundDisplay.ChangeRound(Phase / 2 + 1);
 
         InEffect = false;
         PhaseStartTime = Time.realtimeSinceStartup;
