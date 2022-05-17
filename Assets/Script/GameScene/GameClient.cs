@@ -78,12 +78,14 @@ public class GameClient : MonoBehaviour
         public List<GameObject> Hand;
         public List<GameObject> Used;
         public List<GameObject> Damage;
-        public Text DeckCount;
     }
     public int Phase { get; private set; }
 
     private PlayerObjects Myself;
     private PlayerObjects Rival;
+
+    public TwoDigits MyDeckCount;
+    public TwoDigits RivalDeckCount;
 
     public Text MyName;
     public Text RivalName;
@@ -247,9 +249,7 @@ public class GameClient : MonoBehaviour
 
         Myself.Used = new List<GameObject>(20);
         Myself.Damage = new List<GameObject>(20);
-        GameObject tmp = GameObject.Find("MyDeckCounter");
-        Myself.DeckCount = tmp.GetComponent<Text>();
-        Myself.DeckCount.text = data.mydeckcount.ToString();
+        MyDeckCount.Set(data.mydeckcount);
 
 
         Rival.Hand = new List<GameObject>(data.rivalhand.Length + 1);
@@ -263,9 +263,7 @@ public class GameClient : MonoBehaviour
 
         Rival.Used = new List<GameObject>(20);
         Rival.Damage = new List<GameObject>(20);
-        tmp = GameObject.Find("YourDeckCounter");
-        Rival.DeckCount = tmp.GetComponent<Text>();
-        Rival.DeckCount.text = data.rivaldeckcount.ToString();
+        RivalDeckCount.Set(data.rivaldeckcount);
 
         MyName.text = data.myname;
         RivalName.text = data.rivalname;
@@ -416,6 +414,8 @@ public class GameClient : MonoBehaviour
             RivalBattleAvatar.Attack();
             AudioSource.PlayOneShot(MyAvatar.AudioAttackOffset);
             AudioSource.PlayOneShot(RivalAvatar.AudioAttackOffset);
+            MyAvatar.ChangeExpression(PlayerAvatar.Expression.驚き);
+            RivalAvatar.ChangeExpression(PlayerAvatar.Expression.驚き);
         }
 
 
@@ -436,15 +436,19 @@ public class GameClient : MonoBehaviour
             {
                 Message.text = "Win";
                 AudioSource.PlayOneShot(MyAvatar.AudioWin);
+                MyAvatar.ChangeExpression(PlayerAvatar.Expression.喜び);
             }
             else if (mylife < rivallife)
             {
                 Message.text = "Lose";
                 AudioSource.PlayOneShot(RivalAvatar.AudioWin);
+                RivalAvatar.ChangeExpression(PlayerAvatar.Expression.喜び);
             }
             else
             {
                 Message.text = "Draw";
+                MyAvatar.ChangeExpression(PlayerAvatar.Expression.閉じ);
+                RivalAvatar.ChangeExpression(PlayerAvatar.Expression.閉じ);
             }
             FrontCanvas.SetActive(true);
             Phase = data.phase;
@@ -475,8 +479,8 @@ public class GameClient : MonoBehaviour
             Rival.Hand[i].SetActive(true);
             Rival.Hand[i].transform.DOMove(RivalHandCheckers[i].transform.position, after_time);
         }
-        Myself.DeckCount.text = data.myself.deckcount.ToString();
-        Rival.DeckCount.text = data.rival.deckcount.ToString();
+        MyDeckCount.Set(data.myself.deckcount);
+        RivalDeckCount.Set(data.rival.deckcount);
 
         yield return new WaitForSeconds(after_time);
 
@@ -498,6 +502,9 @@ public class GameClient : MonoBehaviour
             }
             if (Myself.Support != null) Myself.Support.SetActive(false);
             if (Rival.Support != null) Rival.Support.SetActive(false);
+
+            MyAvatar.ChangeExpression(PlayerAvatar.Expression.普通);
+            RivalAvatar.ChangeExpression(PlayerAvatar.Expression.普通);
 
             TimeBar.SetActive(BattleTimeLimit);
         }
