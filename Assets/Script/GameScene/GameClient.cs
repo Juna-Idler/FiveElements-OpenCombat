@@ -229,7 +229,7 @@ public class GameClient : MonoBehaviour
             if (step < 100 + 10)
             {
                 start = -rect.sizeDelta.x / 2 + 50 + 5;
-                step = (rect.sizeDelta.x - (100 + 10)) / (myhandcount + 1 - 2);
+                step = (rect.sizeDelta.x - (100 + 10)) / (rivalhandcount + 1 - 2);
             }
 
             for (int i = 0; i < RivalHandCheckers.Count; i++)
