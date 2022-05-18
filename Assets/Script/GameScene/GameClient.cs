@@ -158,10 +158,11 @@ public class GameClient : MonoBehaviour
     private GameObject[] CardArray;
     private int CardArrayIndex;
 
-    private GameObject CreateCard(int id,bool active = true)
+    private GameObject CreateCard(int id,int order,bool active = true)
     {
         GameObject c = CardArray[CardArrayIndex++];
         c.GetComponent<Card>().Initialize(id);
+        SetSortingGroupOrder(c, order);
         c.SetActive(active);
         return c;
     }
@@ -278,9 +279,8 @@ public class GameClient : MonoBehaviour
         Myself.Hand = new List<GameObject>(data.myhand.Length + 1);
         for (int i = 0; i < data.myhand.Length; i++)
         {
-            GameObject o = CreateCard(data.myhand[i]);
+            GameObject o = CreateCard(data.myhand[i],i + 101);
             o.transform.position = MyHandSelectors[i].transform.position;
-            SetSortingGroupOrder(o, i+1);
             Myself.Hand.Add(o);
             MyHandSelectors[i].Card = o;
         }
@@ -293,9 +293,8 @@ public class GameClient : MonoBehaviour
         Rival.Hand = new List<GameObject>(data.rivalhand.Length + 1);
         for (int i = 0; i < data.rivalhand.Length; i++)
         {
-            GameObject o = CreateCard(data.rivalhand[i]);
+            GameObject o = CreateCard(data.rivalhand[i],i + 101);
             o.transform.position = RivalHandCheckers[i].transform.position;
-            SetSortingGroupOrder(o, i+1);
             Rival.Hand.Add(o);
         }
 
@@ -328,13 +327,13 @@ public class GameClient : MonoBehaviour
 
         for (int i = 0; i < data.myself.draw.Length; i++)
         {
-            GameObject o = CreateCard(data.myself.draw[i],false);
+            GameObject o = CreateCard(data.myself.draw[i],0,false);
             o.transform.position = Myself.DeckPosition;
             Myself.Hand.Add(o);
         }
         for (int i = 0; i < data.rival.draw.Length; i++)
         {
-            GameObject o = CreateCard(data.rival.draw[i],false);
+            GameObject o = CreateCard(data.rival.draw[i],0,false);
             o.transform.position = Rival.DeckPosition;
             Rival.Hand.Add(o);
         }
@@ -342,24 +341,25 @@ public class GameClient : MonoBehaviour
         for (int i = 0; i < Myself.Hand.Count; i++)
         {
             MyHandSelectors[i].Card = Myself.Hand[i];
-            SetSortingGroupOrder(Myself.Hand[i], i + 1);
+            SetSortingGroupOrder(Myself.Hand[i], i + 101);
         }
         for (int i = 0; i < Rival.Hand.Count; i++)
         {
-            SetSortingGroupOrder(Rival.Hand[i], i + 1);
+            SetSortingGroupOrder(Rival.Hand[i], i + 101);
         }
 
         //手札から戦場に移動
-
-        SetSortingGroupOrder(Myself.Battle, 10);
-        SetSortingGroupOrder(Rival.Battle, 10);
 
         const float move_time = 0.5f;
         Myself.Battle.transform.DOMove(Myself.BattlePosition, move_time);
         Rival.Battle.transform.DOMove(Rival.BattlePosition, move_time);
         yield return new WaitForSeconds(move_time);
 
-//戦闘結果をシミュレートするためのカードデータ
+        SetSortingGroupOrder(Myself.Battle, 10);
+        SetSortingGroupOrder(Rival.Battle, 10);
+
+
+        //戦闘結果をシミュレートするためのカードデータ
         CardData myBattleData = Myself.Battle.GetComponent<Card>().CardData;
         CardData rivalBattleData = Rival.Battle.GetComponent<Card>().CardData;
 
@@ -567,7 +567,6 @@ public class GameClient : MonoBehaviour
             DeleteObject.transform.SetParent(MyDamage.transform);
 
             DeleteObject.transform.DOMove(Myself.DamagePosition, 0.5f);
-            SetSortingGroupOrder(DeleteObject, 10);
             for (int i = 0; i < Myself.Hand.Count; i++)
             {
                 Myself.Hand[i].transform.DOMove(MyHandSelectors[i].transform.position, 0.5f);
@@ -586,7 +585,6 @@ public class GameClient : MonoBehaviour
 
 
             DeleteObject.transform.DOMove(Rival.DamagePosition, 0.5f);
-            SetSortingGroupOrder(DeleteObject, 10);
             for (int i = 0; i < Rival.Hand.Count; i++)
                 Rival.Hand[i].transform.DOMove(RivalHandCheckers[i].transform.position, 0.5f);
 

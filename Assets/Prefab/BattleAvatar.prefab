@@ -97,7 +97,7 @@ SortingGroup:
   m_Enabled: 1
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 20
+  m_SortingOrder: 201
 --- !u!114 &4352777622504384245
 MonoBehaviour:
   m_ObjectHideFlags: 0

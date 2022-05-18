@@ -49,7 +49,7 @@ public class CardListView : MonoBehaviour
             Items[i].OriginalPosition = cards[i].transform.position;
             Items[i].OriginalActive = cards[i].activeSelf;
             cards[i].SetActive(true);
-            SetSortingGroupOrder(cards[i], 51 + i);
+            SetSortingGroupOrder(cards[i], 1001 + i);
             cards[i].transform.DOMove(Items[i].transform.position, 0.3f);
         }
         ItemCount = cards.Length;
@@ -61,7 +61,7 @@ public class CardListView : MonoBehaviour
     {
         for (int i = 0; i < ItemCount; i++)
         {
-            SetSortingGroupOrder(Items[i].Card, 1);
+            SetSortingGroupOrder(Items[i].Card, 0);
             Items[i].Card.transform.position = Items[i].OriginalPosition;
             Items[i].Card.SetActive(Items[i].OriginalActive);
             Items[i].Card = null;

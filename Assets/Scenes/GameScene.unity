@@ -200,8 +200,8 @@ Canvas:
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
   m_AdditionalShaderChannelsFlag: 0
-  m_SortingLayerID: 0
-  m_SortingOrder: -1
+  m_SortingLayerID: 505985057
+  m_SortingOrder: 0
   m_TargetDisplay: 0
 --- !u!224 &13004768
 RectTransform:
@@ -627,7 +627,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4352777622504384244, guid: 085fe7dbc6276d84cb4f8deed734ded1, type: 3}
       propertyPath: m_SortingOrder
-      value: 20
+      value: 201
       objectReference: {fileID: 0}
     - target: {fileID: 4352777622504384246, guid: 085fe7dbc6276d84cb4f8deed734ded1, type: 3}
       propertyPath: m_RootOrder
@@ -865,7 +865,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4352777622504384244, guid: 085fe7dbc6276d84cb4f8deed734ded1, type: 3}
       propertyPath: m_SortingOrder
-      value: 20
+      value: 201
       objectReference: {fileID: 0}
     - target: {fileID: 4352777622504384246, guid: 085fe7dbc6276d84cb4f8deed734ded1, type: 3}
       propertyPath: m_RootOrder
@@ -1491,7 +1491,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 10
+  m_SortingOrder: 201
   m_Sprite: {fileID: 21300000, guid: 09684f3a2a30567439952c349f33a790, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -2938,7 +2938,7 @@ SortingGroup:
   m_Enabled: 1
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 100
+  m_SortingOrder: 501
 --- !u!4 &1571922645
 Transform:
   m_ObjectHideFlags: 0
@@ -3224,7 +3224,7 @@ MonoBehaviour:
   m_ScaleFactor: 1
   m_ReferenceResolution: {x: 960, y: 640}
   m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 0
+  m_MatchWidthOrHeight: 1
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
@@ -3249,7 +3249,7 @@ Canvas:
   m_SortingBucketNormalizedSize: 0
   m_AdditionalShaderChannelsFlag: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 100
+  m_SortingOrder: 10000
   m_TargetDisplay: 0
 --- !u!224 &1724200076
 RectTransform:
@@ -3587,7 +3587,7 @@ Canvas:
   m_SortingBucketNormalizedSize: 0
   m_AdditionalShaderChannelsFlag: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 50
+  m_SortingOrder: 1000
   m_TargetDisplay: 0
 --- !u!224 &1874698354
 RectTransform:
@@ -4582,6 +4582,10 @@ PrefabInstance:
     - target: {fileID: 873207992293547264, guid: db3de73c6477940428b30dcf000811aa, type: 3}
       propertyPath: m_Enabled
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 873207992293547264, guid: db3de73c6477940428b30dcf000811aa, type: 3}
+      propertyPath: m_SortingLayerID
+      value: -392994229
       objectReference: {fileID: 0}
     - target: {fileID: 873207992293547268, guid: db3de73c6477940428b30dcf000811aa, type: 3}
       propertyPath: m_Name

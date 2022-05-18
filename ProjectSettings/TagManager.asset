@@ -38,6 +38,12 @@ TagManager:
   - 
   - 
   m_SortingLayers:
+  - name: GameUI
+    uniqueID: 505985057
+    locked: 0
   - name: Default
     uniqueID: 0
+    locked: 0
+  - name: SettingsUI
+    uniqueID: 3901973067
     locked: 0
