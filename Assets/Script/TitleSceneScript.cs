@@ -22,6 +22,9 @@ public class TitleSceneScript : MonoBehaviour
 
     public InputField NameInput;
 
+    public Settings Settings;
+
+
     private readonly RandomCommander Random = new RandomCommander();
     private readonly Level1Commander Level1 = new Level1Commander();
     private readonly Level2Commander Level2 = new Level2Commander();
@@ -160,4 +163,10 @@ public class TitleSceneScript : MonoBehaviour
                 break;
         }
     }
+
+    public void SettingsOpen()
+    {
+        Settings.Open();
+    }
+
 }

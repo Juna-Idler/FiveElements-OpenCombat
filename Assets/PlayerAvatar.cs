@@ -5,6 +5,7 @@ using UnityEngine.U2D.Animation;
 
 public class PlayerAvatar : MonoBehaviour
 {
+    public AudioSource AudioSource;
 
     public AudioClip AudioAttack;
     public AudioClip AudioAttackOffset;
@@ -22,17 +23,32 @@ public class PlayerAvatar : MonoBehaviour
         Resolver.SetCategoryAndLabel(Resolver.GetCategory(), expression.ToString());
     }
 
-/*
-    // Start is called before the first frame update
-    void Start()
+    public enum SpeakOn {Attack,Offset,Damage,Recover,Win };
+    public void Speak(SpeakOn on)
     {
-        
+        AudioClip clip = on switch
+        {
+            SpeakOn.Attack => AudioAttack,
+            SpeakOn.Offset => AudioAttackOffset,
+            SpeakOn.Damage => AudioDamage,
+            SpeakOn.Recover => AudioRecover,
+            SpeakOn.Win => AudioWin,
+            _ => throw new System.NotImplementedException(),
+        };
+        AudioSource.PlayOneShot(clip);
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-*/
+    /*
+        // Start is called before the first frame update
+        void Start()
+        {
+
+        }
+
+        // Update is called once per frame
+        void Update()
+        {
+
+        }
+    */
 }

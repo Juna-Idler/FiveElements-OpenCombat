@@ -116,6 +116,8 @@ public class GameClient : MonoBehaviour
     public GameObject RivalDamage;
 
 
+    public Settings Settings;
+
 //カードリスト表示UI
     public CardListView CardListView;
 
@@ -131,7 +133,7 @@ public class GameClient : MonoBehaviour
     public PlayerAvatar RivalAvatar;
 
 
-    public AudioSource AudioSource;
+    public AudioSource BGMAudioSource;
 
     public GameObject WaitCircle;
 
@@ -432,8 +434,8 @@ public class GameClient : MonoBehaviour
             RivalBattleAvatar.Damage();
             RivalAvatar.ChangeExpression(PlayerAvatar.Expression.痛み);
 
-            AudioSource.PlayOneShot( MyAvatar.AudioAttack);
-            AudioSource.PlayOneShot(RivalAvatar.AudioDamage);
+            MyAvatar.Speak(PlayerAvatar.SpeakOn.Attack);
+            RivalAvatar.Speak(PlayerAvatar.SpeakOn.Damage);
         }
         else if (data.damage > 0)
         {
@@ -441,15 +443,15 @@ public class GameClient : MonoBehaviour
             MyBattleAvatar.Damage();
             MyAvatar.ChangeExpression(PlayerAvatar.Expression.痛み);
 
-            AudioSource.PlayOneShot(MyAvatar.AudioDamage);
-            AudioSource.PlayOneShot(RivalAvatar.AudioAttack);
+            RivalAvatar.Speak(PlayerAvatar.SpeakOn.Attack);
+            MyAvatar.Speak(PlayerAvatar.SpeakOn.Damage);
         }
         else if (data.damage == 0)
         {
             MyBattleAvatar.Attack();
             RivalBattleAvatar.Attack();
-            AudioSource.PlayOneShot(MyAvatar.AudioAttackOffset);
-            AudioSource.PlayOneShot(RivalAvatar.AudioAttackOffset);
+            MyAvatar.Speak(PlayerAvatar.SpeakOn.Offset);
+            RivalAvatar.Speak(PlayerAvatar.SpeakOn.Offset);
             MyAvatar.ChangeExpression(PlayerAvatar.Expression.驚き);
             RivalAvatar.ChangeExpression(PlayerAvatar.Expression.驚き);
         }
@@ -465,13 +467,13 @@ public class GameClient : MonoBehaviour
             if (mylife > rivallife)
             {
                 Message.text = "Win";
-                AudioSource.PlayOneShot(MyAvatar.AudioWin);
+                MyAvatar.Speak(PlayerAvatar.SpeakOn.Win);
                 MyAvatar.ChangeExpression(PlayerAvatar.Expression.喜び);
             }
             else if (mylife < rivallife)
             {
                 Message.text = "Lose";
-                AudioSource.PlayOneShot(RivalAvatar.AudioWin);
+                RivalAvatar.Speak(PlayerAvatar.SpeakOn.Win);
                 RivalAvatar.ChangeExpression(PlayerAvatar.Expression.喜び);
             }
             else
@@ -571,7 +573,7 @@ public class GameClient : MonoBehaviour
                 Myself.Hand[i].transform.DOMove(MyHandSelectors[i].transform.position, 0.5f);
                 MyHandSelectors[i].Card = Myself.Hand[i];
             }
-            AudioSource.PlayOneShot(MyAvatar.AudioRecover);
+            MyAvatar.Speak(PlayerAvatar.SpeakOn.Recover);
         }
         else if (data.damage < 0)
         {
@@ -588,7 +590,7 @@ public class GameClient : MonoBehaviour
             for (int i = 0; i < Rival.Hand.Count; i++)
                 Rival.Hand[i].transform.DOMove(RivalHandCheckers[i].transform.position, 0.5f);
 
-            AudioSource.PlayOneShot(RivalAvatar.AudioRecover);
+            RivalAvatar.Speak(PlayerAvatar.SpeakOn.Recover);
         }
 
         //
@@ -769,7 +771,12 @@ public class GameClient : MonoBehaviour
             EffectCoroutin = StartCoroutine(DamageEffect(data));
         }
     }
-    public void Surrender()
+
+    public void SettingsOpen()
+    {
+        Settings.Open(Surrender);
+    }
+    private void Surrender()
     {
         Server?.SendSurrender();
     }
