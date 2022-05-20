@@ -131,7 +131,7 @@ public class GameClient : MonoBehaviour
 
 
 
-    public Settings Settings;
+    public SettingsScreen Settings;
 
 //カードリスト表示UI
     public CardListView CardListView;

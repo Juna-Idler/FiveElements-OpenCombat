@@ -22,7 +22,7 @@ public class TitleSceneScript : MonoBehaviour
 
     public InputField NameInput;
 
-    public Settings Settings;
+    public SettingsScreen Settings;
 
 
     private readonly RandomCommander Random = new RandomCommander();
