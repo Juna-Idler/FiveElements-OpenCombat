@@ -25,9 +25,9 @@ public class GameClient : MonoBehaviour
 
         InitialData data = Server.GetInitialData();
 
-        GameObject myavatar = Instantiate(KohakuPrefab);
+        GameObject myavatar = Instantiate(AvatarPrefab[GameSceneParam.MyAvatar]);
         Myself.Avatar = myavatar.GetComponent<PlayerAvatar>();
-        GameObject rivalavatar = Instantiate(YukoPrefab);
+        GameObject rivalavatar = Instantiate(AvatarPrefab[GameSceneParam.RivalAvatar]);
         rivalavatar.transform.localPosition = new Vector2(-rivalavatar.transform.localPosition.x, rivalavatar.transform.localPosition.y);
         rivalavatar.transform.localScale = new Vector2(-rivalavatar.transform.localScale.x, rivalavatar.transform.localScale.y);
         Rival.Avatar = rivalavatar.GetComponent<PlayerAvatar>();
@@ -92,7 +92,8 @@ public class GameClient : MonoBehaviour
 
 
         public Text Name;
-        public TwoDigits DeckCount;
+        public TextMeshProUGUI DeckCount;
+//        public TwoDigits DeckCount;
         public GameObject HandArea;
         public Image HandBackImage;
 
@@ -150,9 +151,7 @@ public class GameClient : MonoBehaviour
     public GameObject HandCheckerPrefab;
 
 
-    public GameObject KohakuPrefab;
-    public GameObject YukoPrefab;
-    public GameObject MisakiPrefab;
+    public GameObject[] AvatarPrefab;
 
 
     //ヒエラルキーで見やすくするためだけの空オブジェクト
@@ -284,7 +283,7 @@ public class GameClient : MonoBehaviour
 
         Myself.Used = new List<GameObject>(20);
         Myself.Damage = new List<GameObject>(20);
-        Myself.DeckCount.Set(data.mydeckcount);
+        Myself.DeckCount.text = data.mydeckcount.ToString();
 
 
         Rival.Hand = new List<GameObject>(data.rivalhand.Length + 1);
@@ -297,7 +296,7 @@ public class GameClient : MonoBehaviour
 
         Rival.Used = new List<GameObject>(20);
         Rival.Damage = new List<GameObject>(20);
-        Rival.DeckCount.Set(data.rivaldeckcount);
+        Rival.DeckCount.text = data.rivaldeckcount.ToString();
 
         Myself.Name.text = data.myname;
         Rival.Name.text = data.rivalname;
@@ -507,8 +506,8 @@ public class GameClient : MonoBehaviour
             Rival.Hand[i].SetActive(true);
             Rival.Hand[i].transform.DOMove(RivalHandCheckers[i].transform.position, after_time);
         }
-        Myself.DeckCount.Set(data.myself.deckcount);
-        Rival.DeckCount.Set(data.rival.deckcount);
+        Myself.DeckCount.text = data.myself.deckcount.ToString();
+        Rival.DeckCount.text = data.rival.deckcount.ToString();
 
         yield return new WaitForSeconds(after_time);
 

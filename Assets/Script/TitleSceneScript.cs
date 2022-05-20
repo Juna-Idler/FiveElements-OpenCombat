@@ -37,8 +37,19 @@ public class TitleSceneScript : MonoBehaviour
     private readonly OnlineGameServer3 Server = new OnlineGameServer3();
     private readonly PunGameServer PunServer = new PunGameServer();
 
+
+    public SpriteRenderer MyRenderer;
+    public SpriteRenderer RivalRenderer;
+
+    public Sprite[] Avatars;
+
+
+
     private void Start()
     {
+        MyRenderer.sprite = Avatars[GameSceneParam.MyAvatar];
+        RivalRenderer.sprite = Avatars[GameSceneParam.RivalAvatar];
+
         Commander = Level1;
 
         string name = PlayerPrefs.GetString("name", "");
@@ -167,6 +178,22 @@ public class TitleSceneScript : MonoBehaviour
     public void SettingsOpen()
     {
         Settings.Open();
+    }
+
+    public void ChangeMyAvatar()
+    {
+        GameSceneParam.MyAvatar++;
+        if (GameSceneParam.MyAvatar > 2)
+            GameSceneParam.MyAvatar = 0;
+        MyRenderer.sprite = Avatars[GameSceneParam.MyAvatar];
+    }
+
+    public void ChangeRivalAvatar()
+    {
+        GameSceneParam.RivalAvatar++;
+        if (GameSceneParam.RivalAvatar > 2)
+            GameSceneParam.RivalAvatar = 0;
+        RivalRenderer.sprite = Avatars[GameSceneParam.RivalAvatar];
     }
 
 }
