@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using UnityEngine.Rendering;
 
 using DG.Tweening;
+using TMPro;
 
 public class GameClient : MonoBehaviour
 {
@@ -23,6 +24,13 @@ public class GameClient : MonoBehaviour
         Server.SetUpdateCallback(UpdateCallback);
 
         InitialData data = Server.GetInitialData();
+
+        GameObject myavatar = Instantiate(KohakuPrefab);
+        Myself.Avatar = myavatar.GetComponent<PlayerAvatar>();
+        GameObject rivalavatar = Instantiate(YukoPrefab);
+        rivalavatar.transform.localPosition = new Vector2(-rivalavatar.transform.localPosition.x, rivalavatar.transform.localPosition.y);
+        rivalavatar.transform.localScale = new Vector2(-rivalavatar.transform.localScale.x, rivalavatar.transform.localScale.y);
+        Rival.Avatar = rivalavatar.GetComponent<PlayerAvatar>();
 
         Card.Client = this;
         HandSelector.Client = this;
@@ -64,40 +72,53 @@ public class GameClient : MonoBehaviour
         }
     }
 
-
+    [System.Serializable]
     public class PlayerObjects
     {
+        public GameObject Battle { get; set; }
+        public GameObject Support { get; set; }
+
+        public List<GameObject> Hand { get; set; }
+        public List<GameObject> Used { get; set; }
+        public List<GameObject> Damage { get; set; }
+
+
+//Inspector上で初期化してもらう
+
         public Vector2 BattlePosition;
         public Vector2 UsedPosition;
-        public Vector3 DamagePosition;
-        public Vector3 DeckPosition;
+        public Vector2 DamagePosition;
+        public Vector2 DeckPosition;
 
-        public GameObject Battle;
-        public GameObject Support;
 
-        public List<GameObject> Hand;
-        public List<GameObject> Used;
-        public List<GameObject> Damage;
+        public Text Name;
+        public TwoDigits DeckCount;
+        public GameObject HandArea;
+        public Image HandBackImage;
+
+        public Arrow SupportArrow;
+        public Arrow BattleArrow;
+
+
+        public PlayerAvatar Avatar { get; set; }
+
+        public BattleAvatar BattleAvatar;
     }
-    public int Phase { get; private set; }
 
-    private PlayerObjects Myself;
-    private PlayerObjects Rival;
-
-    public TwoDigits MyDeckCount;
-    public TwoDigits RivalDeckCount;
-
-    public Text MyName;
-    public Text RivalName;
-
-
-    public GameObject MyHandArea;
-    public GameObject RivalHandArea;
+    public PlayerObjects Myself;
+    public PlayerObjects Rival;
 
     private readonly List<HandSelector> MyHandSelectors = new List<HandSelector>(10);
     private readonly List<HandChecker> RivalHandCheckers = new List<HandChecker>(10);
 
-    public RoundDisplay RoundDisplay;
+    public int Phase { get; private set; }
+
+    public TextMeshPro RoundText;
+
+
+    public AudioSource BGMAudioSource;
+
+    public GameObject WaitCircle;
 
 
     public TimeBar TimeBar;
@@ -107,13 +128,6 @@ public class GameClient : MonoBehaviour
     private float BattleTimeLimit;
     private float DamageTimeLimit;
 
-    //ヒエラルキーで見やすくするためだけの空オブジェクト
-    public GameObject Cards;
-
-    public GameObject MyUsed;
-    public GameObject RivalUsed;
-    public GameObject MyDamage;
-    public GameObject RivalDamage;
 
 
     public Settings Settings;
@@ -122,30 +136,10 @@ public class GameClient : MonoBehaviour
     public CardListView CardListView;
 
 
-    public Image MyHandBackImage;
-    public Image RivalHandBackImage;
-
     public GameObject FrontCanvas;
     public Text Message;
 
 
-    public PlayerAvatar MyAvatar;
-    public PlayerAvatar RivalAvatar;
-
-
-    public AudioSource BGMAudioSource;
-
-    public GameObject WaitCircle;
-
-    public Arrow MySupportArrow;
-    public Arrow RivalSupportArrow;
-
-    public Arrow MyBattleArrow;
-    public Arrow RivalBattleArrow;
-
-
-    public BattleAvatar MyBattleAvatar;
-    public BattleAvatar RivalBattleAvatar;
 
 
     public bool InEffect { get; private set; } = false;
@@ -154,6 +148,21 @@ public class GameClient : MonoBehaviour
     public GameObject CardPrefab;
     public GameObject HandSelectorPrefab;
     public GameObject HandCheckerPrefab;
+
+
+    public GameObject KohakuPrefab;
+    public GameObject YukoPrefab;
+    public GameObject MisakiPrefab;
+
+
+    //ヒエラルキーで見やすくするためだけの空オブジェクト
+    public GameObject Cards;
+
+    public GameObject MyUsed;
+    public GameObject RivalUsed;
+    public GameObject MyDamage;
+    public GameObject RivalDamage;
+
 
     private GameObject[] CardArray;
     private int CardArrayIndex;
@@ -183,7 +192,7 @@ public class GameClient : MonoBehaviour
                 GameObject go = Instantiate(HandSelectorPrefab);
                 HandSelector hs = go.GetComponent<HandSelector>();
                 MyHandSelectors.Add(hs);
-                go.transform.SetParent(MyHandArea.transform);
+                go.transform.SetParent(Myself.HandArea.transform);
                 hs.Index = i;
             }
         }
@@ -194,13 +203,13 @@ public class GameClient : MonoBehaviour
                 GameObject go = Instantiate(HandCheckerPrefab);
                 HandChecker hc = go.GetComponent<HandChecker>();
                 RivalHandCheckers.Add(hc);
-                go.transform.SetParent(RivalHandArea.transform);
+                go.transform.SetParent(Rival.HandArea.transform);
                 hc.Index = i;
             }
         }
 
         {
-            RectTransform rect = MyHandArea.GetComponent<RectTransform>();
+            RectTransform rect = Myself.HandArea.GetComponent<RectTransform>();
             float step = rect.sizeDelta.x / (myhandcount + 1);
             float start = -rect.sizeDelta.x / 2 + step;
             if (step < 100 + 10)
@@ -224,7 +233,7 @@ public class GameClient : MonoBehaviour
             }
         }
         {
-            RectTransform rect = RivalHandArea.GetComponent<RectTransform>();
+            RectTransform rect = Rival.HandArea.GetComponent<RectTransform>();
             float step = rect.sizeDelta.x / (rivalhandcount + 1);
             float start = -rect.sizeDelta.x / 2 + step;
             if (step < 100 + 10)
@@ -259,21 +268,9 @@ public class GameClient : MonoBehaviour
 
         Phase = 0;
 
-        RoundDisplay.ChangeRound(Phase / 2 + 1);
+        RoundText.text = $"Round {Phase / 2 + 1}\nBattle";
 
         SetHandCount(data.myhand.Length, data.rivalhand.Length);
-
-        Myself = new PlayerObjects();
-        Rival = new PlayerObjects();
-
-        Myself.BattlePosition = new Vector2(70,0);
-        Rival.BattlePosition = new Vector2(-70, 0);
-        Myself.UsedPosition = new Vector2(200, 0);
-        Rival.UsedPosition = new Vector2(-200, 0);
-        Myself.DamagePosition = new Vector2(350, 0);
-        Rival.DamagePosition = new Vector2(-350, 0);
-        Myself.DeckPosition = new Vector2(350, -200);
-        Rival.DeckPosition = new Vector2(-350, 200);
 
 
         Myself.Hand = new List<GameObject>(data.myhand.Length + 1);
@@ -287,7 +284,7 @@ public class GameClient : MonoBehaviour
 
         Myself.Used = new List<GameObject>(20);
         Myself.Damage = new List<GameObject>(20);
-        MyDeckCount.Set(data.mydeckcount);
+        Myself.DeckCount.Set(data.mydeckcount);
 
 
         Rival.Hand = new List<GameObject>(data.rivalhand.Length + 1);
@@ -300,14 +297,15 @@ public class GameClient : MonoBehaviour
 
         Rival.Used = new List<GameObject>(20);
         Rival.Damage = new List<GameObject>(20);
-        RivalDeckCount.Set(data.rivaldeckcount);
+        Rival.DeckCount.Set(data.rivaldeckcount);
 
-        MyName.text = data.myname;
-        RivalName.text = data.rivalname;
+        Myself.Name.text = data.myname;
+        Rival.Name.text = data.rivalname;
 
         BattleTimeLimit = data.battleSelectTimeLimitSecond;
         DamageTimeLimit = data.damageSelectTimeLimitSecond;
 
+       
     }
 
     public IEnumerator BattleEffect(UpdateData data)
@@ -364,8 +362,8 @@ public class GameClient : MonoBehaviour
         CardData rivalBattleData = Rival.Battle.GetComponent<Card>().CardData;
 
 //演出用の戦闘体
-        MyBattleAvatar.Appearance(Myself.BattlePosition, myBattleData);
-        RivalBattleAvatar.Appearance(Rival.BattlePosition, rivalBattleData);
+        Myself.BattleAvatar.Appearance(Myself.BattlePosition, myBattleData);
+        Rival.BattleAvatar.Appearance(Rival.BattlePosition, rivalBattleData);
 
 //サポートエフェクト
         if (Myself.Support != null)
@@ -374,25 +372,25 @@ public class GameClient : MonoBehaviour
             int c = CardData.Chemistry(myBattleData.Element, mySupportData.Element);
             if (c > 0)
             {
-                MyBattleAvatar.Raise();
-                MySupportArrow.StartAnimationPlus();
+                Myself.BattleAvatar.Raise();
+                Myself.SupportArrow.StartAnimationPlus();
             }
             else if (c < 0)
             {
-                MyBattleAvatar.Reduce();
-                MySupportArrow.StartAnimationMinus();
+                Myself.BattleAvatar.Reduce();
+                Myself.SupportArrow.StartAnimationMinus();
             }
             CardData rivalSupportData = Rival.Support.GetComponent<Card>().CardData;
             c = CardData.Chemistry(rivalBattleData.Element, rivalSupportData.Element);
             if (c > 0)
             {
-                RivalBattleAvatar.Raise();
-                RivalSupportArrow.StartAnimationPlus();
+                Rival.BattleAvatar.Raise();
+                Rival.SupportArrow.StartAnimationPlus();
             }
             else if (c < 0)
             {
-                RivalBattleAvatar.Reduce();
-                RivalSupportArrow.StartAnimationMinus();
+                Rival.BattleAvatar.Reduce();
+                Rival.SupportArrow.StartAnimationMinus();
             }
             yield return new WaitForSeconds(0.5f);
         }
@@ -402,24 +400,24 @@ public class GameClient : MonoBehaviour
             int c2 = CardData.Chemistry(rivalBattleData.Element, myBattleData.Element);
             if (c1 > 0)
             {
-                MyBattleAvatar.Raise();
-                MyBattleArrow.StartAnimationPlus();
+                Myself.BattleAvatar.Raise();
+                Myself.BattleArrow.StartAnimationPlus();
             }
             else if (c1 < 0)
             {
-                MyBattleAvatar.Reduce();
-                MyBattleArrow.StartAnimationMinus();
+                Myself.BattleAvatar.Reduce();
+                Myself.BattleArrow.StartAnimationMinus();
             }
 
             if (c2 > 0)
             {
-                RivalBattleAvatar.Raise();
-                RivalBattleArrow.StartAnimationPlus();
+                Rival.BattleAvatar.Raise();
+                Rival.BattleArrow.StartAnimationPlus();
             }
             else if (c2 < 0)
             {
-                RivalBattleAvatar.Reduce();
-                RivalBattleArrow.StartAnimationMinus();
+                Rival.BattleAvatar.Reduce();
+                Rival.BattleArrow.StartAnimationMinus();
             }
         }
         yield return new WaitForSeconds(0.5f);
@@ -430,30 +428,30 @@ public class GameClient : MonoBehaviour
 
         if (data.damage < 0)
         {
-            MyBattleAvatar.Attack();
-            RivalBattleAvatar.Damage();
-            RivalAvatar.ChangeExpression(PlayerAvatar.Expression.痛み);
+            Myself.BattleAvatar.Attack();
+            Rival.BattleAvatar.Damage();
+            Rival.Avatar.ChangeExpression(PlayerAvatar.Expression.痛み);
 
-            MyAvatar.Speak(PlayerAvatar.SpeakOn.Attack);
-            RivalAvatar.Speak(PlayerAvatar.SpeakOn.Damage);
+            Myself.Avatar.Speak(PlayerAvatar.SpeakOn.Attack);
+            Rival.Avatar.Speak(PlayerAvatar.SpeakOn.Damage);
         }
         else if (data.damage > 0)
         {
-            RivalBattleAvatar.Attack();
-            MyBattleAvatar.Damage();
-            MyAvatar.ChangeExpression(PlayerAvatar.Expression.痛み);
+            Rival.BattleAvatar.Attack();
+            Myself.BattleAvatar.Damage();
+            Myself.Avatar.ChangeExpression(PlayerAvatar.Expression.痛み);
 
-            RivalAvatar.Speak(PlayerAvatar.SpeakOn.Attack);
-            MyAvatar.Speak(PlayerAvatar.SpeakOn.Damage);
+            Rival.Avatar.Speak(PlayerAvatar.SpeakOn.Attack);
+            Myself.Avatar.Speak(PlayerAvatar.SpeakOn.Damage);
         }
         else if (data.damage == 0)
         {
-            MyBattleAvatar.Attack();
-            RivalBattleAvatar.Attack();
-            MyAvatar.Speak(PlayerAvatar.SpeakOn.Offset);
-            RivalAvatar.Speak(PlayerAvatar.SpeakOn.Offset);
-            MyAvatar.ChangeExpression(PlayerAvatar.Expression.驚き);
-            RivalAvatar.ChangeExpression(PlayerAvatar.Expression.驚き);
+            Myself.BattleAvatar.Attack();
+            Rival.BattleAvatar.Attack();
+            Myself.Avatar.Speak(PlayerAvatar.SpeakOn.Offset);
+            Rival.Avatar.Speak(PlayerAvatar.SpeakOn.Offset);
+            Myself.Avatar.ChangeExpression(PlayerAvatar.Expression.驚き);
+            Rival.Avatar.ChangeExpression(PlayerAvatar.Expression.驚き);
         }
 
         yield return new WaitForSeconds(result_time);
@@ -467,20 +465,20 @@ public class GameClient : MonoBehaviour
             if (mylife > rivallife)
             {
                 Message.text = "Win";
-                MyAvatar.Speak(PlayerAvatar.SpeakOn.Win);
-                MyAvatar.ChangeExpression(PlayerAvatar.Expression.喜び);
+                Myself.Avatar.Speak(PlayerAvatar.SpeakOn.Win);
+                Myself.Avatar.ChangeExpression(PlayerAvatar.Expression.喜び);
             }
             else if (mylife < rivallife)
             {
                 Message.text = "Lose";
-                RivalAvatar.Speak(PlayerAvatar.SpeakOn.Win);
-                RivalAvatar.ChangeExpression(PlayerAvatar.Expression.喜び);
+                Rival.Avatar.Speak(PlayerAvatar.SpeakOn.Win);
+                Rival.Avatar.ChangeExpression(PlayerAvatar.Expression.喜び);
             }
             else
             {
                 Message.text = "Draw";
-                MyAvatar.ChangeExpression(PlayerAvatar.Expression.閉じ);
-                RivalAvatar.ChangeExpression(PlayerAvatar.Expression.閉じ);
+                Myself.Avatar.ChangeExpression(PlayerAvatar.Expression.閉じ);
+                Rival.Avatar.ChangeExpression(PlayerAvatar.Expression.閉じ);
             }
             FrontCanvas.SetActive(true);
             Phase = data.phase;
@@ -509,8 +507,8 @@ public class GameClient : MonoBehaviour
             Rival.Hand[i].SetActive(true);
             Rival.Hand[i].transform.DOMove(RivalHandCheckers[i].transform.position, after_time);
         }
-        MyDeckCount.Set(data.myself.deckcount);
-        RivalDeckCount.Set(data.rival.deckcount);
+        Myself.DeckCount.Set(data.myself.deckcount);
+        Rival.DeckCount.Set(data.rival.deckcount);
 
         yield return new WaitForSeconds(after_time);
 
@@ -519,7 +517,7 @@ public class GameClient : MonoBehaviour
         InEffect = false;
         if ((data.phase & 1) == 0)
         {
-            RoundDisplay.ChangeRound(Phase / 2 + 1);
+            RoundText.text = $"Round {Phase / 2 + 1}\nBattle";
             for (int i = 0; i < Myself.Hand.Count; i++)
             {
                 int j = CardData.Chemistry(Myself.Hand[i].GetComponent<Card>().CardData.Element, Myself.Used.Last().GetComponent<Card>().CardData.Element);
@@ -535,20 +533,21 @@ public class GameClient : MonoBehaviour
             if (Myself.Support != null) Myself.Support.SetActive(false);
             if (Rival.Support != null) Rival.Support.SetActive(false);
 
-            MyAvatar.ChangeExpression(PlayerAvatar.Expression.普通);
-            RivalAvatar.ChangeExpression(PlayerAvatar.Expression.普通);
+            Myself.Avatar.ChangeExpression(PlayerAvatar.Expression.普通);
+            Rival.Avatar.ChangeExpression(PlayerAvatar.Expression.普通);
 
             TimeBar.SetActive(BattleTimeLimit);
         }
         else
         {
-            RoundDisplay.ChangeDamagePhase();
+            RoundText.text = $"Round {Phase / 2 + 1}\nDamage";
             if (data.damage <= 0)
             {
+                Rival.HandBackImage.color = new Color(1, 0, 0, 100f / 256f);
                 DecideCard(-1);
                 yield break;
             }
-            MyHandBackImage.color = new Color(1, 0, 0, 100f / 256f);
+            Myself.HandBackImage.color = new Color(1, 0, 0, 100f / 256f);
             TimeBar.SetActive(DamageTimeLimit);
         }
         PhaseStartTime = Time.realtimeSinceStartup;
@@ -572,7 +571,7 @@ public class GameClient : MonoBehaviour
                 Myself.Hand[i].transform.DOMove(MyHandSelectors[i].transform.position, 0.5f);
                 MyHandSelectors[i].Card = Myself.Hand[i];
             }
-            MyAvatar.Speak(PlayerAvatar.SpeakOn.Recover);
+            Myself.Avatar.Speak(PlayerAvatar.SpeakOn.Recover);
         }
         else if (data.damage < 0)
         {
@@ -588,7 +587,7 @@ public class GameClient : MonoBehaviour
             for (int i = 0; i < Rival.Hand.Count; i++)
                 Rival.Hand[i].transform.DOMove(RivalHandCheckers[i].transform.position, 0.5f);
 
-            RivalAvatar.Speak(PlayerAvatar.SpeakOn.Recover);
+            Rival.Avatar.Speak(PlayerAvatar.SpeakOn.Recover);
         }
 
         //
@@ -597,8 +596,8 @@ public class GameClient : MonoBehaviour
 
         yield return new WaitForSeconds(0.5f);
 
-        RivalAvatar.ChangeExpression(PlayerAvatar.Expression.普通);
-        MyAvatar.ChangeExpression(PlayerAvatar.Expression.普通);
+        Rival.Avatar.ChangeExpression(PlayerAvatar.Expression.普通);
+        Myself.Avatar.ChangeExpression(PlayerAvatar.Expression.普通);
 
         SetSortingGroupOrder(Myself.Battle, 0);
         SetSortingGroupOrder(Rival.Battle, 0);
@@ -618,9 +617,10 @@ public class GameClient : MonoBehaviour
             int j = CardData.Chemistry(Rival.Hand[i].GetComponent<Card>().CardData.Element, Rival.Used.Last().GetComponent<Card>().CardData.Element);
             RivalHandCheckers[i].SetPlusMinus(j);
         }
-        MyHandBackImage.color = new Color(1, 1, 1, 100f / 256f);
+        Myself.HandBackImage.color = new Color(1, 1, 1, 100f / 256f);
+        Rival.HandBackImage.color = new Color(1, 1, 1, 100f / 256f);
 
-        RoundDisplay.ChangeRound(Phase / 2 + 1);
+        RoundText.text = $"Round {Phase / 2 + 1}\nBattle";
 
         InEffect = false;
         PhaseStartTime = Time.realtimeSinceStartup;
