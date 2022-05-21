@@ -93,7 +93,6 @@ public class GameClient : MonoBehaviour
 
         public Text Name;
         public TextMeshProUGUI DeckCount;
-//        public TwoDigits DeckCount;
         public GameObject HandArea;
         public Image HandBackImage;
 
@@ -138,7 +137,7 @@ public class GameClient : MonoBehaviour
 
 
     public GameObject FrontCanvas;
-    public Text Message;
+    public TextMeshProUGUI Message;
 
 
 
@@ -209,12 +208,12 @@ public class GameClient : MonoBehaviour
 
         {
             RectTransform rect = Myself.HandArea.GetComponent<RectTransform>();
-            float step = rect.sizeDelta.x / (myhandcount + 1);
-            float start = -rect.sizeDelta.x / 2 + step;
+            float step = rect.rect.width / (myhandcount + 1);
+            float start = -rect.rect.width / 2 + step;
             if (step < 100 + 10)
             {
-                start = -rect.sizeDelta.x / 2 + 50 + 5;
-                step = (rect.sizeDelta.x - (100 + 10)) / (myhandcount + 1 - 2);
+                start = -rect.rect.width / 2 + 50 + 5;
+                step = (rect.rect.width - (100 + 10)) / (myhandcount + 1 - 2);
             }
 
             for (int i = 0; i < MyHandSelectors.Count; i++)
@@ -233,12 +232,12 @@ public class GameClient : MonoBehaviour
         }
         {
             RectTransform rect = Rival.HandArea.GetComponent<RectTransform>();
-            float step = rect.sizeDelta.x / (rivalhandcount + 1);
-            float start = -rect.sizeDelta.x / 2 + step;
+            float step = rect.rect.width / (rivalhandcount + 1);
+            float start = -rect.rect.width / 2 + step;
             if (step < 100 + 10)
             {
-                start = -rect.sizeDelta.x / 2 + 50 + 5;
-                step = (rect.sizeDelta.x - (100 + 10)) / (rivalhandcount + 1 - 2);
+                start = -rect.rect.width / 2 + 50 + 5;
+                step = (rect.rect.width - (100 + 10)) / (rivalhandcount + 1 - 2);
             }
 
             for (int i = 0; i < RivalHandCheckers.Count; i++)
@@ -267,7 +266,7 @@ public class GameClient : MonoBehaviour
 
         Phase = 0;
 
-        RoundText.text = $"Round {Phase / 2 + 1}\nBattle";
+        RoundTextAction($"Round {Phase / 2 + 1}");
 
         SetHandCount(data.myhand.Length, data.rivalhand.Length);
 
@@ -516,7 +515,7 @@ public class GameClient : MonoBehaviour
         InEffect = false;
         if ((data.phase & 1) == 0)
         {
-            RoundText.text = $"Round {Phase / 2 + 1}\nBattle";
+            RoundTextAction($"Round {Phase / 2 + 1}");
             for (int i = 0; i < Myself.Hand.Count; i++)
             {
                 int j = CardData.Chemistry(Myself.Hand[i].GetComponent<Card>().CardData.Element, Myself.Used.Last().GetComponent<Card>().CardData.Element);
@@ -539,7 +538,6 @@ public class GameClient : MonoBehaviour
         }
         else
         {
-            RoundText.text = $"Round {Phase / 2 + 1}\nDamage";
             if (data.damage <= 0)
             {
                 Rival.HandBackImage.color = new Color(1, 0, 0, 100f / 256f);
@@ -549,6 +547,7 @@ public class GameClient : MonoBehaviour
             Myself.HandBackImage.color = new Color(1, 0, 0, 100f / 256f);
             TimeBar.SetActive(DamageTimeLimit);
         }
+
         PhaseStartTime = Time.realtimeSinceStartup;
     }
 
@@ -619,13 +618,31 @@ public class GameClient : MonoBehaviour
         Myself.HandBackImage.color = new Color(1, 1, 1, 100f / 256f);
         Rival.HandBackImage.color = new Color(1, 1, 1, 100f / 256f);
 
-        RoundText.text = $"Round {Phase / 2 + 1}\nBattle";
-
+        RoundTextAction( $"Round {Phase / 2 + 1}");
         InEffect = false;
         PhaseStartTime = Time.realtimeSinceStartup;
         TimeBar.SetActive(BattleTimeLimit);
+
+
     }
 
+    private void RoundTextAction(string text)
+    {
+        {
+            Vector3 pos = RoundText.gameObject.transform.position;
+
+            DOTween.Sequence()
+                .Append(DOTween.ToAlpha(() => RoundText.color, x => RoundText.color = x, 0, 0.1f))
+                .Join(RoundText.gameObject.transform.DOScale(2, 0.1f))
+                .Append(RoundText.gameObject.transform.DOMove(new Vector3(0, 0), 0.0f))
+                .AppendCallback(() => { RoundText.text = text; })
+                .Append(DOTween.ToAlpha(() => RoundText.color, x => RoundText.color = x, 1, 0.3f))
+                .AppendInterval(0.2f)
+                .Append(RoundText.gameObject.transform.DOMove(pos, 0.3f))
+                .Join(RoundText.gameObject.transform.DOScale(1, 0.3f));
+        }
+
+    }
 
 
 
@@ -732,6 +749,8 @@ public class GameClient : MonoBehaviour
             yield return EffectCoroutin;
             EffectCoroutin = null;
         }
+        PhaseStartTime = -1;
+        TimeBar.gameObject.SetActive(false);
 
         if (Phase < 0)
             yield break;
@@ -754,8 +773,6 @@ public class GameClient : MonoBehaviour
         if (data == null)
             yield break;
         InEffect = true;
-        PhaseStartTime = -1;
-        TimeBar.gameObject.SetActive(false);
 
         if ((Phase & 1) == 0)
         {

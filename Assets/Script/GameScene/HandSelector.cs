@@ -80,7 +80,7 @@ public class HandSelector : MonoBehaviour,IBeginDragHandler,IDragHandler,IEndDra
     {
         if (DragCard == null)
             return;
-        if (Client.InEffect)
+        if (Client.InEffect || Client.Phase < 0)
         {
             DragCard.transform.position = gameObject.transform.position;
             DragCard = null;

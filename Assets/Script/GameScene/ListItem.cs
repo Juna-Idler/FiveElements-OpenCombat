@@ -10,6 +10,7 @@ public class ListItem : MonoBehaviour , IPointerClickHandler
 
     public GameObject Card;
     public Vector2 OriginalPosition;
+    public Vector2 OriginalScale;
     public bool OriginalActive;
 
 
