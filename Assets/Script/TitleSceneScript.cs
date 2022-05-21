@@ -24,6 +24,8 @@ public class TitleSceneScript : MonoBehaviour
 
     public SettingsScreen Settings;
 
+    public FadeCanvas FadeCanvas;
+    public float FadeDuration;
 
     private readonly RandomCommander Random = new RandomCommander();
     private readonly Level1Commander Level1 = new Level1Commander();
@@ -43,6 +45,7 @@ public class TitleSceneScript : MonoBehaviour
 
     public Sprite[] Avatars;
 
+    public UnityEngine.Audio.AudioMixer AudioMixer;
 
 
     private void Start()
@@ -55,8 +58,7 @@ public class TitleSceneScript : MonoBehaviour
         string name = PlayerPrefs.GetString("name", "");
         NameInput.GetComponent<InputField>().text = name;
 
-        if (LocalMode)
-            ServerUrl = "ws://localhost:8080/";
+        FadeCanvas.FadeIn(FadeDuration);
     }
 
     public async void OnlineButtonClick()
@@ -90,9 +92,8 @@ public class TitleSceneScript : MonoBehaviour
 
             if (await Server.TryConnect(new System.Uri(server), name))
             {
-                    GameSceneParam.GameServer = Server;
-
-                SceneManager.LoadScene("GameScene");
+                GameSceneParam.GameServer = Server;
+                FadeCanvas.FadeOut(FadeDuration, () => SceneManager.LoadScene("GameScene"));
             }
             else
             {
@@ -132,8 +133,7 @@ public class TitleSceneScript : MonoBehaviour
             if (await PunServer.TryConnect(name))
             {
                 GameSceneParam.GameServer = PunServer;
-
-                SceneManager.LoadScene("GameScene");
+                FadeCanvas.FadeOut(FadeDuration, () => SceneManager.LoadScene("GameScene"));
             }
             else
             {
@@ -154,8 +154,7 @@ public class TitleSceneScript : MonoBehaviour
         IGameServer server = new OfflineGameServer(name,Commander);
 
         GameSceneParam.GameServer = server;
-
-        SceneManager.LoadScene("GameScene");
+        FadeCanvas.FadeOut(FadeDuration, () => SceneManager.LoadScene("GameScene"));
     }
     public void ChangeLevel(int index)
     {
@@ -179,6 +178,27 @@ public class TitleSceneScript : MonoBehaviour
     {
         Settings.Open();
     }
+
+    public void RestoreAudioSettings()
+    {
+        if (PlayerPrefs.HasKey("BGM"))
+        {
+            AudioMixer.SetFloat("BGM", PlayerPrefs.GetFloat("BGM"));
+        }
+        if (PlayerPrefs.HasKey("SE"))
+        {
+            AudioMixer.SetFloat("SE", PlayerPrefs.GetFloat("SE"));
+        }
+        if (PlayerPrefs.HasKey("Voice"))
+        {
+            AudioMixer.SetFloat("Voice", PlayerPrefs.GetFloat("Voice"));
+        }
+        if (PlayerPrefs.HasKey("Mute"))
+        {
+            AudioListener.volume = PlayerPrefs.GetInt("Mute") != 0 ? 1 : 0;
+        }
+    }
+
 
     public void ChangeMyAvatar()
     {

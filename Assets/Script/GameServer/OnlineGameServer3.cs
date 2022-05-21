@@ -16,13 +16,13 @@ public class OnlineGameServer3 : IGameServer
         public class PlayerData
         {
             public string name;
-            public int[] hand;
-            public int deckcount;
         }
         public PlayerData y;
         public PlayerData r;
         public int battletime;
         public int damagetime;
+
+        public string abort;
     }
 
 
@@ -89,7 +89,7 @@ public class OnlineGameServer3 : IGameServer
             if (ws == null)
                 return;
 
-            byte[] joincommand = System.Text.Encoding.UTF8.GetBytes($@"{{""command"":""Join"",""playername"":""{playername}""}}");
+            byte[] joincommand = System.Text.Encoding.UTF8.GetBytes($@"{{""command"":""Join"",""playername"":""{playername}"",""version"":{CardCatalog.Version}}}");
             await ws.Send(joincommand);
             Debug.Log("WS OnOpen:Send FirstCommand");
         };
@@ -102,14 +102,16 @@ public class OnlineGameServer3 : IGameServer
                 string json = System.Text.Encoding.UTF8.GetString(data);
                 InitialReceiveData idata = JsonUtility.FromJson<InitialReceiveData>(json);
 
+                if (!string.IsNullOrEmpty(idata.abort))
+                {
+                    tcs.SetResult(false);
+                    return;
+                }
+
                 InitialData = new InitialData()
                 {
                     battleSelectTimeLimitSecond = idata.battletime,
                     damageSelectTimeLimitSecond = idata.damagetime,
-                    myhand = idata.y.hand,
-                    rivalhand = idata.r.hand,
-                    mydeckcount = idata.y.deckcount,
-                    rivaldeckcount = idata.r.deckcount,
                     myname = idata.y.name,
                     rivalname = idata.r.name
                 };
@@ -155,6 +157,12 @@ public class OnlineGameServer3 : IGameServer
     void IGameServer.SetUpdateCallback(IGameServer.UpdateCallback callback)
     {
         Callback = callback;
+    }
+
+    void IGameServer.SendReady()
+    {
+        string ready_command = $@"{{""command"":""Ready""}}";
+        _ = ws.SendText(ready_command);
     }
 
     void IGameServer.SendSelect(int phase, int index)

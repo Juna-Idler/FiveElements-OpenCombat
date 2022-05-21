@@ -21,7 +21,7 @@ public class GameClient : MonoBehaviour
         {
             Server = new OfflineGameServer("Tester",new Level1Commander());
         }
-        Server.SetUpdateCallback(UpdateCallback);
+        Server.SetUpdateCallback(FirstUpdateCallback);
 
         InitialData data = Server.GetInitialData();
 
@@ -36,7 +36,9 @@ public class GameClient : MonoBehaviour
         HandSelector.Client = this;
         HandChecker.Client = this;
 
-        CardArray = new GameObject[40];
+        CardListView.Initialize();
+
+        CardArray = new GameObject[GameSceneParam.DeckMaxCardNumber * 2];
         for (int i = 0; i < CardArray.Length; i++)
         {
             CardArray[i] = Instantiate(CardPrefab);
@@ -45,12 +47,97 @@ public class GameClient : MonoBehaviour
         }
         CardArrayIndex = 0;
 
-        CardListView.Initialize();
-        InitializeField(data);
+        Myself.Name.text = data.myname;
+        Rival.Name.text = data.rivalname;
+
+        BattleTimeLimit = data.battleSelectTimeLimitSecond;
+        DamageTimeLimit = data.damageSelectTimeLimitSecond;
+
         FrontCanvas.SetActive(false);
+
+        FadeCanvas.Active();
+
+
+        Server.SendReady();
+    }
+
+    private void FirstUpdateCallback(UpdateData data, string abort)
+    {
+        Server.SetUpdateCallback(UpdateCallback);
+
+        EffectCoroutin = StartCoroutine(FirstUpdateCoroutine(data, abort));
+    }
+    public IEnumerator FirstUpdateCoroutine(UpdateData data, string abort)
+    {
+        if (abort != null)
+        {
+            Phase = -1;
+            if (data.damage > 0)
+                Message.text = abort + " Lose";
+            else if (data.damage < 0)
+                Message.text = abort + " Win";
+            else
+                Message.text = abort + " Draw";
+            FrontCanvas.SetActive(true);
+            InEffect = false;
+            Server.Terminalize();
+            yield break;
+        }
+
+        InEffect = true;
+
+        Phase = data.phase;
+
+        SetHandCount(data.myself.draw.Length, data.rival.draw.Length);
+
+        Myself.Hand = new List<GameObject>(data.myself.draw.Length + 1);
+        for (int i = 0; i < data.myself.draw.Length; i++)
+        {
+            GameObject o = CreateCard(data.myself.draw[i], i + 101);
+            o.transform.position = MyHandSelectors[i].transform.position;
+            Myself.Hand.Add(o);
+            MyHandSelectors[i].Card = o;
+        }
+
+        Myself.Used = new List<GameObject>(20);
+        Myself.Damage = new List<GameObject>(20);
+        Myself.DeckCount.text = data.myself.deckcount.ToString();
+
+
+        Rival.Hand = new List<GameObject>(data.rival.draw.Length + 1);
+        for (int i = 0; i < data.rival.draw.Length; i++)
+        {
+            GameObject o = CreateCard(data.rival.draw[i], i + 101);
+            o.transform.position = RivalHandCheckers[i].transform.position;
+            Rival.Hand.Add(o);
+        }
+        Rival.Used = new List<GameObject>(20);
+        Rival.Damage = new List<GameObject>(20);
+        Rival.DeckCount.text = data.rival.deckcount.ToString();
+
+
+        //なんか開始演出
+
+        RoundText.text = "";
+
+        //1フレーム目が重いので待つ
+        yield return null;
+
+        FadeCanvas.FadeIn(1);
+
+
+        yield return new WaitForSeconds(1f);
+
+
+        RoundTextAction($"Round 1");
+
+        InEffect = false;
         PhaseStartTime = Time.realtimeSinceStartup;
         TimeBar.SetActive(BattleTimeLimit);
     }
+
+
+
 
     void Update()
     {
@@ -139,7 +226,7 @@ public class GameClient : MonoBehaviour
     public GameObject FrontCanvas;
     public TextMeshProUGUI Message;
 
-
+    public FadeCanvas FadeCanvas;
 
 
     public bool InEffect { get; private set; } = false;
@@ -149,8 +236,9 @@ public class GameClient : MonoBehaviour
     public GameObject HandSelectorPrefab;
     public GameObject HandCheckerPrefab;
 
-
     public GameObject[] AvatarPrefab;
+
+
 
 
     //ヒエラルキーで見やすくするためだけの空オブジェクト
@@ -256,55 +344,6 @@ public class GameClient : MonoBehaviour
         }
     }
 
-    public void InitializeField(InitialData data)
-    {
-        foreach (GameObject c in CardArray)
-        {
-            c.SetActive(false);
-        }
-        CardArrayIndex = 0;
-
-        Phase = 0;
-
-        RoundTextAction($"Round {Phase / 2 + 1}");
-
-        SetHandCount(data.myhand.Length, data.rivalhand.Length);
-
-
-        Myself.Hand = new List<GameObject>(data.myhand.Length + 1);
-        for (int i = 0; i < data.myhand.Length; i++)
-        {
-            GameObject o = CreateCard(data.myhand[i],i + 101);
-            o.transform.position = MyHandSelectors[i].transform.position;
-            Myself.Hand.Add(o);
-            MyHandSelectors[i].Card = o;
-        }
-
-        Myself.Used = new List<GameObject>(20);
-        Myself.Damage = new List<GameObject>(20);
-        Myself.DeckCount.text = data.mydeckcount.ToString();
-
-
-        Rival.Hand = new List<GameObject>(data.rivalhand.Length + 1);
-        for (int i = 0; i < data.rivalhand.Length; i++)
-        {
-            GameObject o = CreateCard(data.rivalhand[i],i + 101);
-            o.transform.position = RivalHandCheckers[i].transform.position;
-            Rival.Hand.Add(o);
-        }
-
-        Rival.Used = new List<GameObject>(20);
-        Rival.Damage = new List<GameObject>(20);
-        Rival.DeckCount.text = data.rivaldeckcount.ToString();
-
-        Myself.Name.text = data.myname;
-        Rival.Name.text = data.rivalname;
-
-        BattleTimeLimit = data.battleSelectTimeLimitSecond;
-        DamageTimeLimit = data.damageSelectTimeLimitSecond;
-
-       
-    }
 
     public IEnumerator BattleEffect(UpdateData data)
     {
@@ -648,7 +687,10 @@ public class GameClient : MonoBehaviour
 
     public void GoToTitle()
     {
-        UnityEngine.SceneManagement.SceneManager.LoadScene("TitleScene");
+        FadeCanvas.FadeOut(1f);
+        DOTween.Sequence()
+            .AppendInterval(1)
+            .AppendCallback(() => { UnityEngine.SceneManagement.SceneManager.LoadScene("TitleScene"); });
     }
 
 
@@ -758,11 +800,11 @@ public class GameClient : MonoBehaviour
         {
             Phase = -1;
             if (data.damage > 0)
-                Message.text = abort + " Lose";
+                Message.text = abort + "\nLose";
             else if (data.damage < 0)
-                Message.text = abort +" Win";
+                Message.text = abort +"\nWin";
             else
-                Message.text = abort + " Draw";
+                Message.text = abort + "\nDraw";
 
             FrontCanvas.SetActive(true);
             InEffect = false;

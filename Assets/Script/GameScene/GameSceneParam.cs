@@ -9,4 +9,6 @@ public static class GameSceneParam
     public static int MyAvatar = 0;
     public static int RivalAvatar = 1;
 
+    public static int DeckMaxCardNumber = 25;
+
 }

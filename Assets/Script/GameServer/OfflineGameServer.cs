@@ -30,18 +30,10 @@ public class OfflineGameServer : IGameServer
 
     InitialData IGameServer.GetInitialData()
     {
-        int[] hand1 = GameProcessor.Player1.hand.ToArray();
-        int[] hand2 = GameProcessor.Player2.hand.ToArray();
-        Result = Commander.FirstSelect(hand2, hand1);
-
         return new InitialData()
         {
             battleSelectTimeLimitSecond = 15,
             damageSelectTimeLimitSecond = 10,
-            myhand = hand1,
-            rivalhand = hand2,
-            mydeckcount = GameProcessor.Player1.deck.Count,
-            rivaldeckcount = GameProcessor.Player2.deck.Count,
             myname = PlayerName,
             rivalname = Commander.Name
         };
@@ -52,6 +44,19 @@ public class OfflineGameServer : IGameServer
     {
         Callback = callback;
     }
+
+    void IGameServer.SendReady()
+    {
+        UpdateData.PlayerData p1 = CreateUpdatePlayerData(GameProcessor.Player1);
+        UpdateData.PlayerData p2 = CreateUpdatePlayerData(GameProcessor.Player2);
+        UpdateData p1update = new() { phase = 0, damage = 0, myself = p1, rival = p2 };
+//        UpdateData p2update = new() { phase = 0, damage = 0, myself = p2, rival = p1 };
+
+        Result = Commander.FirstSelect(p2.draw,p1.draw);
+
+        Callback(p1update, null);
+    }
+
 
     void IGameServer.SendSelect(int phase,int index)
     {

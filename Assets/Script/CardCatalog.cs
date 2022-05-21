@@ -14,7 +14,7 @@ public class CardCatalog
             public int Power;
         }
         public Card[] CardCatalog;
-        public int version;
+        public string version;
     }
 
     static CardCatalog()
@@ -26,6 +26,7 @@ public class CardCatalog
 
         JsonCatalog catalog = JsonUtility.FromJson<JsonCatalog>(json);
 
+        Version = catalog.version;
         Instance.Catalog = new CardData[catalog.CardCatalog.Length];
         for (int i = 0; i < catalog.CardCatalog.Length; i++)
         {
@@ -35,6 +36,8 @@ public class CardCatalog
 
 
     public static CardCatalog Instance { get; private set; }
+
+    public static string Version { get; private set; }
 
     private CardData[] Catalog;
 

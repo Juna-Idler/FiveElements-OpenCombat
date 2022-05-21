@@ -9,19 +9,22 @@ public class GameProcessor
     {
         public List<int> hand = new(5);
         public LinkedList<int> deck;
-        public List<int> used = new(20);
-        public List<int> damage = new(10);
+        public List<int> used = new(25);
+        public List<int> damage = new(15);
 
         public int select = -1;
         public List<int> draw = new(2);
 
         public PlayerData()
         {
-            int[] array = new int[20];
-            for (int i = 0; i < 10; i++)
+            int[] array = new int[25];
+            for (int i = 0; i < 5; i++)
             {
                 array[i] = i + 1;
+                array[5 + i] = i + 1;
                 array[10 + i] = i + 1;
+                array[15 + i] = i + 5 + 1;
+                array[20 + i] = i + 10 + 1;
             }
             deck = new LinkedList<int>(array.OrderBy(x => UnityEngine.Random.Range(int.MinValue, int.MaxValue)));
             DrawCard(4);

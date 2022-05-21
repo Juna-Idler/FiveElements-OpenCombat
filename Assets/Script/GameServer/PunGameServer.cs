@@ -25,8 +25,6 @@ public class PunGameServer : IGameServer,
         [System.Serializable]
         public class PlayerData
         {
-            public int[] hand;
-            public int deckcount;
         }
         public PlayerData y;
         public PlayerData r;
@@ -142,8 +140,39 @@ public class PunGameServer : IGameServer,
         if (PhotonNetwork.CurrentRoom.PlayerCount == 2)
         {
             PhotonNetwork.CurrentRoom.IsOpen = false;
-            RaiseEventOptions options = new RaiseEventOptions() { Receivers = ReceiverGroup.MasterClient };
-            PhotonNetwork.RaiseEvent(RaiseEvent_InitializeMaster, 0, options, ExitGames.Client.Photon.SendOptions.SendReliable);
+
+            BattleSelectTimeLimitSecond = 15;
+            DamageSelectTimeLimitSecond = 10;
+
+            InitialReceiveData.PlayerData p1 = new InitialReceiveData.PlayerData
+            {
+            };
+            InitialReceiveData.PlayerData p2 = new InitialReceiveData.PlayerData
+            {
+            };
+
+            InitialReceiveData p1initial = new InitialReceiveData()
+            {
+                battletime = BattleSelectTimeLimitSecond,
+                damagetime = DamageSelectTimeLimitSecond,
+                y = p1,
+                r = p2
+            };
+            InitialReceiveData p2initial = new InitialReceiveData()
+            {
+                battletime = BattleSelectTimeLimitSecond,
+                damagetime = DamageSelectTimeLimitSecond,
+                y = p2,
+                r = p1
+            };
+
+            int p1number = PhotonNetwork.MasterClient.ActorNumber;
+            int p2number = PhotonNetwork.MasterClient.GetNext().ActorNumber;
+
+            RaiseEventOptions options = new RaiseEventOptions() { TargetActors = new int[] { p1number } };
+            PhotonNetwork.RaiseEvent(RaiseEvent_Matched, JsonUtility.ToJson(p1initial), options, ExitGames.Client.Photon.SendOptions.SendReliable);
+            options.TargetActors = new int[] { p2number };
+            PhotonNetwork.RaiseEvent(RaiseEvent_Matched, JsonUtility.ToJson(p2initial), options, ExitGames.Client.Photon.SendOptions.SendReliable);
         }
     }
 
@@ -158,12 +187,12 @@ public class PunGameServer : IGameServer,
     #endregion
 
 
-    private const byte RaiseEvent_InitializeMaster = 1;
-    private const byte RaiseEvent_Initialize = 2;
+    private const byte RaiseEvent_Matched = 1;
     private const byte RaiseEvent_Update = 3;
 
-    private const byte RaiseEvent_Select = 4;
-    private const byte RaiseEvent_Surrender = 5;
+    private const byte RaiseEvent_Ready = 4;
+    private const byte RaiseEvent_Select = 5;
+    private const byte RaiseEvent_Surrender = 6;
 
 
     private InitialReceiveData initialReceiveData;
@@ -173,49 +202,7 @@ public class PunGameServer : IGameServer,
     {
         switch (photonEvent.Code)
         {
-            case RaiseEvent_InitializeMaster:
-                {
-                    GameProcessor = new GameProcessor();
-
-                    BattleSelectTimeLimitSecond = 15;
-                    DamageSelectTimeLimitSecond = 10;
-
-                    InitialReceiveData.PlayerData p1 = new InitialReceiveData.PlayerData
-                    {
-                        hand = GameProcessor.Player1.draw.ToArray(),
-                        deckcount = GameProcessor.Player1.deck.Count
-                    };
-                    InitialReceiveData.PlayerData p2 = new InitialReceiveData.PlayerData
-                    {
-                        hand = GameProcessor.Player2.draw.ToArray(),
-                        deckcount = GameProcessor.Player2.deck.Count
-                    };
-
-                    InitialReceiveData p1initial = new InitialReceiveData()
-                    {
-                        battletime = BattleSelectTimeLimitSecond,
-                        damagetime = DamageSelectTimeLimitSecond,
-                        y = p1,
-                        r = p2
-                    };
-                    InitialReceiveData p2initial = new InitialReceiveData()
-                    {
-                        battletime = BattleSelectTimeLimitSecond,
-                        damagetime = DamageSelectTimeLimitSecond,
-                        y = p2,
-                        r = p1
-                    };
-
-                    int p1number = PhotonNetwork.MasterClient.ActorNumber;
-                    int p2number = PhotonNetwork.MasterClient.GetNext().ActorNumber;
-
-                    RaiseEventOptions options = new RaiseEventOptions() { TargetActors = new int[] { p1number } };
-                    PhotonNetwork.RaiseEvent(RaiseEvent_Initialize, JsonUtility.ToJson(p1initial), options, ExitGames.Client.Photon.SendOptions.SendReliable);
-                    options.TargetActors = new int[] { p2number };
-                    PhotonNetwork.RaiseEvent(RaiseEvent_Initialize, JsonUtility.ToJson(p2initial), options, ExitGames.Client.Photon.SendOptions.SendReliable);
-                }
-                break;
-            case RaiseEvent_Initialize:
+            case RaiseEvent_Matched:
                 {
                     initialReceiveData = JsonUtility.FromJson<InitialReceiveData>((string)photonEvent.CustomData);
                     tcs.SetResult(true);
@@ -233,6 +220,64 @@ public class PunGameServer : IGameServer,
                         myself = data.y.ToPlayerData(),
                         rival = data.r.ToPlayerData()
                     }, null);
+                }
+                break;
+            case RaiseEvent_Ready:
+                {
+                    if (photonEvent.Sender == PhotonNetwork.MasterClient.ActorNumber)
+                    {
+                        Select1 = 0;
+                    }
+                    else
+                    {
+                        Select2 = 0;
+                    }
+                    if (Select1 >= 0 && Select2 >= 0)
+                    {
+                        GameProcessor = new GameProcessor();
+
+                        BattleSelectTimeLimitSecond = 15;
+                        DamageSelectTimeLimitSecond = 10;
+
+                        UpdateReceiveData.PlayerData p1 = new UpdateReceiveData.PlayerData
+                        {
+                            s = -1,
+                            d = GameProcessor.Player1.draw.ToArray(),
+                            c = GameProcessor.Player1.deck.Count
+                        };
+                        UpdateReceiveData.PlayerData p2 = new UpdateReceiveData.PlayerData
+                        {
+                            s = -1,
+                            d = GameProcessor.Player2.draw.ToArray(),
+                            c = GameProcessor.Player2.deck.Count
+                        };
+
+                        UpdateReceiveData p1update = new UpdateReceiveData()
+                        {
+                            p = GameProcessor.Phase,
+                            d = GameProcessor.BattleDamage,
+                            y = p1,
+                            r = p2,
+                            a = null,
+                        };
+                        UpdateReceiveData p2update = new UpdateReceiveData()
+                        {
+                            p = GameProcessor.Phase,
+                            d = -GameProcessor.BattleDamage,
+                            y = p2,
+                            r = p1,
+                            a = null,
+                        };
+                        int p1number = PhotonNetwork.MasterClient.ActorNumber;
+                        int p2number = PhotonNetwork.MasterClient.GetNext().ActorNumber;
+
+                        RaiseEventOptions options = new RaiseEventOptions() { TargetActors = new int[] { p1number } };
+                        PhotonNetwork.RaiseEvent(RaiseEvent_Update, JsonUtility.ToJson(p1update), options, ExitGames.Client.Photon.SendOptions.SendReliable);
+                        options.TargetActors = new int[] { p2number };
+                        PhotonNetwork.RaiseEvent(RaiseEvent_Update, JsonUtility.ToJson(p2update), options, ExitGames.Client.Photon.SendOptions.SendReliable);
+
+                        Select1 = Select2 = -1;
+                    }
                 }
                 break;
             case RaiseEvent_Select:
@@ -330,11 +375,17 @@ public class PunGameServer : IGameServer,
             damageSelectTimeLimitSecond = initialReceiveData.damagetime,
             myname = myself.NickName,
             rivalname = rival.NickName,
-            myhand = initialReceiveData.y.hand,
-            rivalhand = initialReceiveData.r.hand,
-            mydeckcount = initialReceiveData.y.deckcount,
-            rivaldeckcount = initialReceiveData.r.deckcount,
         };
+    }
+
+    void IGameServer.SendReady()
+    {
+        if (!PhotonNetwork.IsConnected)
+            return;
+
+        RaiseEventOptions options = new RaiseEventOptions() { Receivers = ReceiverGroup.MasterClient };
+        PhotonNetwork.RaiseEvent(RaiseEvent_Ready, null , options, ExitGames.Client.Photon.SendOptions.SendReliable);
+
     }
 
     void IGameServer.SendSelect(int phase, int index)

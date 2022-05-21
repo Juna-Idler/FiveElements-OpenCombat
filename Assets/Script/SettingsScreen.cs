@@ -27,8 +27,10 @@ public class SettingsScreen : MonoBehaviour
         BGMSlider.value = FromDb(bgm);
         SESlider.value = FromDb(se);
         VoiceSlider.value = FromDb(voice);
+
         MuteToggle.isOn = AudioListener.volume == 0;
     }
+
 
 
     public void Open(System.Action surrender = null)
@@ -46,17 +48,29 @@ public class SettingsScreen : MonoBehaviour
 
     public void ChangeBGM(float v)
     {
-        AudioMixer.SetFloat("BGM", ToDb(v));
+        float db = ToDb(v);
+        PlayerPrefs.SetFloat("BGM", db);
+        AudioMixer.SetFloat("BGM", db);
     }
 
     public void ChangeSE(float v)
     {
+        float db = ToDb(v);
+        PlayerPrefs.SetFloat("SE", db);
         AudioMixer.SetFloat("SE", ToDb(v));
     }
 
     public void ChangeVoice(float v)
     {
+        float db = ToDb(v);
+        PlayerPrefs.SetFloat("Voice", db);
         AudioMixer.SetFloat("Voice", ToDb(v));
+    }
+
+    public void ToggleMute(bool check)
+    {
+        PlayerPrefs.SetInt("Mute", check ? 0 : 1);
+        AudioListener.volume = check ? 0 : 1;
     }
 
 
@@ -65,11 +79,6 @@ public class SettingsScreen : MonoBehaviour
     {
         Close();
         Surrender();
-    }
-
-    public void ToggleMute(bool check)
-    {
-        AudioListener.volume = check ? 0 : 1;
     }
 
     private static float ToDb(float v)

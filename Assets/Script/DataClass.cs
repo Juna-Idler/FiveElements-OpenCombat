@@ -2,40 +2,9 @@
 using System.Collections.Generic;
 
 
-public class UpdateData
-{
-    public int phase;
-    public int damage;
 
-    public class PlayerData
-    {
-        public int[] draw;
-        public int select;
-        public int deckcount;
-    }
-    public PlayerData myself;
-    public PlayerData rival;
-}
 
-public class InitialData
-{
-    public int battleSelectTimeLimitSecond;
-    public int damageSelectTimeLimitSecond;
 
-    public string myname;
-    public string rivalname;
-
-    public int[] myhand;
-    public int[] rivalhand;
-    public int mydeckcount;
-    public int rivaldeckcount;
-}
-
-public class AbortMessage
-{
-    public string reason;
-    public int game;
-}
 
 
 public class CardData
